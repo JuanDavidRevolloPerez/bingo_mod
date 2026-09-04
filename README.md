@@ -55,7 +55,7 @@ bingo_mod/
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/JuanDavidRevollo/bingo_mod.git
+   git clone https://github.com/JuanDavidRevolloPerez/bingo_mod.git
    ```
 
 2. **Ubicar en el servidor web:**
@@ -89,5 +89,5 @@ bingo_mod/
 
 ## 👤 Autor
 
-- **Juan Revollo** - [GitHub](https://github.com/JuanDavidRevollo)
+- **Juan Revollo** - [GitHub](https://github.com/JuanDavidRevolloPerez)
 - Contacto: `juandavidrevolloperez@gmail.com`
