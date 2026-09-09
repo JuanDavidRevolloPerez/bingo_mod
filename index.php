@@ -227,5 +227,6 @@ function mostrarError(el, msg) { el.textContent = msg; el.style.display = 'block
 
 document.getElementById('u-codigo').addEventListener('input', function(){ this.value = this.value.toUpperCase(); });
 </script>
+<script src="js/panel_v22.js"></script>
 </body>
 </html>

@@ -214,5 +214,6 @@ poll();
 setInterval(poll, 2500);
 </script>
 <audio id="audio-inicio" src="https://assets.mixkit.co/active_storage/sfx/2704/2704-preview.mp3" preload="auto"></audio>
+<script src="js/panel_v22.js"></script>
 </body>
 </html>

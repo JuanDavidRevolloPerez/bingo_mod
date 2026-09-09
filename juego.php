@@ -387,5 +387,6 @@ function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/
 
 init();
 </script>
+<script src="js/panel_v22.js"></script>
 </body>
 </html>

@@ -268,5 +268,6 @@ async function subirKyc() {
   }
 }
 </script>
+<script src="js/panel_v22.js"></script>
 </body>
 </html>

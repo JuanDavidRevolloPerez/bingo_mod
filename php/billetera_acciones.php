@@ -1,6 +1,6 @@
 <?php
 /**
- * billetera_acciones.php - Endpoints de Billetera, Pagos y Verificación KYC (V2.1)
+ * billetera_acciones.php - Endpoints de Billetera, Pagos, Verificación KYC y Simulador V2.2
  */
 require_once __DIR__ . '/funciones.php';
 
@@ -103,7 +103,7 @@ switch ($accion) {
 
         jsonOk([
             'mensaje' => "Código OTP de verificación enviado a {$email}.",
-            'otp_demo' => $otp // Se entrega para facilitar pruebas interactivas
+            'otp_demo' => $otp
         ]);
         break;
 
@@ -137,6 +137,115 @@ switch ($accion) {
         jsonOk([
             'mensaje' => '¡Documentación verificada exitosamente! Has ascendido a KYC Nivel 2 (Habilitado para retiros).',
             'kyc' => $_SESSION['kyc']
+        ]);
+        break;
+
+    // ── V2.2: ACCIONES DE SIMULACIÓN Y PANEL INTERACTIVO ─────────────
+
+    case 'cambiar_perfil_demo':
+        $tipoPerfil = $req['perfil'] ?? 'nivel_1';
+        switch ($tipoPerfil) {
+            case 'nivel_0':
+                $_SESSION['usuario']['nickname'] = 'Carlos (Básico)';
+                $_SESSION['usuario']['email'] = 'carlos.basico@bingo.local';
+                $_SESSION['usuario']['nivel_kyc'] = 0;
+                $_SESSION['kyc']['nivel'] = 0;
+                $_SESSION['kyc']['estado_doc'] = 'PENDIENTE';
+                $_SESSION['billetera']['saldo_disponible'] = 0.00;
+                $_SESSION['billetera']['saldo_retenido'] = 0.00;
+                break;
+
+            case 'nivel_1':
+                $_SESSION['usuario']['nickname'] = 'María (Jugadora)';
+                $_SESSION['usuario']['email'] = 'maria.jugadora@bingo.local';
+                $_SESSION['usuario']['nivel_kyc'] = 1;
+                $_SESSION['kyc']['nivel'] = 1;
+                $_SESSION['kyc']['estado_doc'] = 'PENDIENTE';
+                $_SESSION['billetera']['saldo_disponible'] = 25000.00;
+                $_SESSION['billetera']['saldo_retenido'] = 0.00;
+                break;
+
+            case 'nivel_2':
+                $_SESSION['usuario']['nickname'] = 'Andrés (VIP)';
+                $_SESSION['usuario']['email'] = 'andres.vip@bingo.local';
+                $_SESSION['usuario']['nivel_kyc'] = 2;
+                $_SESSION['usuario']['documento'] = 'CC 1020304050';
+                $_SESSION['kyc']['nivel'] = 2;
+                $_SESSION['kyc']['estado_doc'] = 'APROBADO';
+                $_SESSION['billetera']['saldo_disponible'] = 150000.00;
+                $_SESSION['billetera']['saldo_retenido'] = 0.00;
+                break;
+
+            case 'personalizado':
+                $nombre = sanitizar($req['nickname'] ?? 'Jugador');
+                $saldo  = floatval($req['saldo'] ?? 10000);
+                $nivel  = intval($req['nivel'] ?? 1);
+                $_SESSION['usuario']['nickname'] = $nombre;
+                $_SESSION['usuario']['nivel_kyc'] = $nivel;
+                $_SESSION['kyc']['nivel'] = $nivel;
+                $_SESSION['billetera']['saldo_disponible'] = $saldo;
+                break;
+        }
+
+        jsonOk([
+            'mensaje'   => "Perfil cambiado exitosamente a {$_SESSION['usuario']['nickname']}",
+            'usuario'   => $_SESSION['usuario'],
+            'billetera' => $_SESSION['billetera'],
+            'kyc'       => $_SESSION['kyc']
+        ]);
+        break;
+
+    case 'simular_jugadores_sala':
+        $codigoSala = strtoupper(trim($req['codigo'] ?? ''));
+        $cantidad   = intval($req['cantidad'] ?? 3);
+        if (!$codigoSala) jsonError('Código de sala requerido');
+
+        $sala = cargarSala($codigoSala);
+        if (!$sala) jsonError('Sala no encontrada');
+        if ($sala['estado'] !== 'esperando') jsonError('Solo se pueden añadir jugadores en sala de espera');
+
+        $nombresBots = ['Camila', 'Felipe', 'Valentina', 'Santiago', 'Daniela', 'Mateo', 'Lucía', 'Sebastián'];
+        $buyIn = floatval($sala['buy_in'] ?? 0);
+
+        for ($i = 0; $i < $cantidad; $i++) {
+            if (count($sala['jugadores']) >= 20) break;
+            $nombreBot = $nombresBots[array_rand($nombresBots)] . ' (Sim)';
+            $botId     = 'bot_' . bin2hex(random_bytes(4));
+            $sala['jugadores'][] = ['id' => $botId, 'nombre' => $nombreBot, 'buy_in_pagado' => $buyIn];
+            if ($sala['tipo_sala'] === 'payplay') {
+                $sala['pozo_total'] = ($sala['pozo_total'] ?? 0) + $buyIn;
+            }
+        }
+
+        guardarSala($sala);
+        jsonOk([
+            'mensaje'    => "Se añadieron {$cantidad} jugadores simulados a la sala {$codigoSala}",
+            'total_jugadores' => count($sala['jugadores']),
+            'pozo_total' => $sala['pozo_total'] ?? 0
+        ]);
+        break;
+
+    case 'simular_webhook_pasarela':
+        $monto     = floatval($req['monto'] ?? 50000);
+        $evento    = $req['evento'] ?? 'APPROVED';
+        $referencia = 'SIM-WH-' . strtoupper(bin2hex(random_bytes(4)));
+        $secretKey  = 'sec_events_bingo_prod_test';
+        
+        // Reconstrucción de Hash SHA-256 (RF-15)
+        $firmaGenerada = hash('sha256', "{$referencia}{$monto}COP{$secretKey}");
+
+        if ($evento === 'APPROVED') {
+            $_SESSION['billetera']['saldo_disponible'] += $monto;
+            registrarTransaccion('RECARGA', $monto, $_SESSION['billetera']['saldo_disponible'], "Simulación Webhook Aprobado ($monto COP)", $referencia);
+        }
+
+        jsonOk([
+            'mensaje'        => "Webhook {$evento} procesado con éxito",
+            'referencia'     => $referencia,
+            'firma_sha256'   => $firmaGenerada,
+            'monto'          => $monto,
+            'evento'         => $evento,
+            'saldo_actual'   => $_SESSION['billetera']['saldo_disponible']
         ]);
         break;
 
