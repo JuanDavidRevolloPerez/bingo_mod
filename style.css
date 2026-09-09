@@ -652,6 +652,337 @@ input[type="text"]::placeholder {
   gap: 1rem;
 }
 
+/* ═══════════════════════════════════════════════
+   V2.1 - ECONOMÍA VIRTUAL, BILLETERA, KYC Y POZO
+   ═══════════════════════════════════════════════ */
+
+/* ── Navbar ── */
+.app-nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.5rem;
+  background: rgba(14, 33, 11, 0.75);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  gap: 1rem;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.chip-saldo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(204, 245, 0, 0.08);
+  border: 1px solid rgba(204, 245, 0, 0.3);
+  padding: 0.4rem 0.85rem;
+  border-radius: 50px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.chip-saldo:hover {
+  background: rgba(204, 245, 0, 0.16);
+  border-color: var(--yellow);
+  box-shadow: 0 0 15px rgba(204, 245, 0, 0.2);
+}
+
+.nav-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.85rem;
+  border-radius: 50px;
+  color: var(--text);
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.nav-link-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Mode Selector (Free vs Payplay) ── */
+.mode-toggle-group {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 1.25rem;
+  gap: 4px;
+}
+
+.mode-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.mode-btn.active {
+  background: var(--surface2);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.mode-btn.active.payplay-active {
+  background: linear-gradient(135deg, rgba(204, 245, 0, 0.15), rgba(0, 148, 217, 0.2));
+  border-color: var(--yellow);
+  color: #fff;
+}
+
+/* ── Buy-in Chips ── */
+.buyin-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.buyin-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+}
+
+.buyin-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  padding: 0.55rem 0.3rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.buyin-chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.buyin-chip.selected {
+  background: var(--yellow);
+  color: #11280d;
+  border-color: #fff;
+  box-shadow: 0 0 16px rgba(204, 245, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+/* ── Prize Pool Live Banner ── */
+.prize-pool-banner {
+  background: linear-gradient(135deg, rgba(204, 245, 0, 0.12), rgba(0, 148, 217, 0.18));
+  border: 1px solid rgba(204, 245, 0, 0.35);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.prize-pool-banner::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(204, 245, 0, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.prize-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--yellow);
+  font-weight: 600;
+}
+
+.prize-amount {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(1.6rem, 5vw, 2.3rem);
+  color: #fff;
+  text-shadow: 0 0 18px rgba(204, 245, 0, 0.4);
+  line-height: 1.1;
+}
+
+.prize-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ── Billetera & KYC Cards ── */
+.balance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.balance-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  position: relative;
+}
+
+.balance-card.highlight {
+  border-color: rgba(204, 245, 0, 0.3);
+  background: linear-gradient(135deg, rgba(204, 245, 0, 0.05), rgba(255, 255, 255, 0.05));
+}
+
+.balance-card.escrow {
+  border-color: rgba(0, 148, 217, 0.3);
+  background: linear-gradient(135deg, rgba(0, 148, 217, 0.05), rgba(255, 255, 255, 0.05));
+}
+
+.balance-num {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 1.8rem;
+  color: #fff;
+  margin: 0.4rem 0 0.2rem;
+}
+
+.badge-kyc-0 { background: rgba(255, 255, 255, 0.1); color: var(--muted); border: 1px solid rgba(255,255,255,0.2); }
+.badge-kyc-1 { background: rgba(0, 148, 217, 0.15); color: #4dc2ff; border: 1px solid rgba(0, 148, 217, 0.35); }
+.badge-kyc-2 { background: rgba(86, 215, 38, 0.15); color: var(--green); border: 1px solid rgba(86, 215, 38, 0.35); }
+
+/* ── Transactions Ledger Table ── */
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.tx-table th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.tx-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tx-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.tx-recarga { background: rgba(86, 215, 38, 0.15); color: var(--green); }
+.tx-buyin   { background: rgba(0, 148, 217, 0.15); color: #50c4ff; }
+.tx-premio  { background: rgba(204, 245, 0, 0.18); color: var(--yellow); }
+.tx-retiro  { background: rgba(249, 52, 22, 0.15); color: #ff6b6b; }
+.tx-reembolso { background: rgba(255, 255, 255, 0.12); color: var(--text); }
+
+/* ── Payment Methods Selection ── */
+.pay-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.pay-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pay-card:hover {
+  background: var(--surface2);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.pay-card.active {
+  border-color: var(--yellow);
+  background: rgba(204, 245, 0, 0.08);
+  box-shadow: 0 0 12px rgba(204, 245, 0, 0.15);
+}
+
+/* ── KYC File Dropzone ── */
+.dropzone-kyc {
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 1rem;
+}
+
+.dropzone-kyc:hover {
+  border-color: var(--accent);
+  background: rgba(0, 148, 217, 0.05);
+}
+
 /* ── Responsive ── */
 @media (max-width: 700px) {
   .game-grid {
@@ -661,10 +992,22 @@ input[type="text"]::placeholder {
   .card {
     padding: 1.25rem;
   }
+
+  .balance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .buyin-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 400px) {
   .cell {
     font-size: 0.72rem;
+  }
+  
+  .app-nav {
+    padding: 0.6rem 0.8rem;
   }
 }

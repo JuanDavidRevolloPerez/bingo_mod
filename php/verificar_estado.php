@@ -20,9 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $accion === 'estado') {
         guardarSala($sala);
     }
 
+    $pozoTotal   = floatval($sala['pozo_total'] ?? (count($sala['jugadores']) * ($sala['buy_in'] ?? 0)));
+    $comisionPct = floatval($sala['comision_pct'] ?? 0.10);
+    $pozoNeto    = round($pozoTotal * (1 - $comisionPct), 2);
+
     jsonOk(['sala' => [
         'codigo'            => $sala['codigo'],
         'nombre'            => $sala['nombre'],
+        'tipo_sala'         => $sala['tipo_sala'] ?? 'free',
+        'buy_in'            => $sala['buy_in'] ?? 0,
+        'pozo_total'        => $pozoTotal,
+        'pozo_neto'         => $pozoNeto,
+        'comision_pct'      => $comisionPct,
+        'premio_ganado'     => $sala['premio_ganado'] ?? null,
         'estado'            => $sala['estado'],
         'host_id'           => $sala['host_id'],
         'jugadores'         => $sala['jugadores'],
@@ -78,13 +88,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($accionPost === 'salir') {
         $sala = cargarSala($codigoPost);
         if ($sala) {
+            $tipoSala = $sala['tipo_sala'] ?? 'free';
+            $buyIn    = floatval($sala['buy_in'] ?? 0);
+
             if ($sala['estado'] === 'esperando') {
+                // Reembolso de Escrow si es Payplay (RF-20)
+                if ($tipoSala === 'payplay' && $buyIn > 0) {
+                    reembolsarSaldoEscrow($buyIn, $codigoPost);
+                    $sala['pozo_total'] = max(0, ($sala['pozo_total'] ?? 0) - $buyIn);
+                }
+
                 // En lobby: eliminar jugador del array
                 $sala['jugadores'] = array_values(array_filter($sala['jugadores'], fn($j) => $j['id'] !== $miId));
-                if ($sala['host_id'] === $miId && !empty($sala['jugadores']))
+                if ($sala['host_id'] === $miId && !empty($sala['jugadores'])) {
                     $sala['host_id'] = $sala['jugadores'][0]['id'];
-                if (empty($sala['jugadores'])) eliminarSala($codigoPost);
-                else guardarSala($sala);
+                }
+                if (empty($sala['jugadores'])) {
+                    eliminarSala($codigoPost);
+                } else {
+                    guardarSala($sala);
+                }
 
             } elseif ($sala['estado'] === 'jugando') {
                 // En partida: marcar jugador como ausente
@@ -101,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 guardarSala($sala);
             }
         }
-        session_destroy();
+        unset($_SESSION['jugador_id'], $_SESSION['codigo_sala']);
         jsonOk();
     }
 

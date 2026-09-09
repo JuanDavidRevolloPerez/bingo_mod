@@ -17,6 +17,14 @@ if ($sala['host_id'] !== $miId)      jsonError('Solo el host puede iniciar la pa
 if ($sala['estado'] !== 'esperando') jsonError('La partida ya fue iniciada');
 if (count($sala['jugadores']) < 1)   jsonError('Necesitas al menos un jugador');
 
+// Consolidación de Fondos Payplay (Fase 2 de Escrow)
+if (($sala['tipo_sala'] ?? 'free') === 'payplay') {
+    $numJugadores = count($sala['jugadores']);
+    $buyIn        = floatval($sala['buy_in'] ?? 0);
+    $sala['pozo_total'] = $numJugadores * $buyIn;
+    $sala['estado_financiero'] = 'COBRADA';
+}
+
 // Modo de nomenclatura: 'normal' o 'reducido'
 $modo = ($body['modo'] ?? 'normal') === 'reducido' ? 'reducido' : 'normal';
 // Auto-forzar reducido si hay menos de 5 jugadores (regla de negocio)
@@ -38,4 +46,7 @@ $sala['intervalo_fichas'] = $intervalo;
 $sala['proxima_ficha_at'] = time() + $intervalo;
 
 guardarSala($sala);
-jsonOk();
+jsonOk([
+    'pozo_total' => $sala['pozo_total'] ?? 0,
+    'tipo_sala'  => $sala['tipo_sala'] ?? 'free'
+]);

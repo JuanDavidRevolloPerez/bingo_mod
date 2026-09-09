@@ -42,6 +42,25 @@ $sala['estado']          = 'finalizado';
 $sala['ganador_id']      = $miId;
 $sala['ganador_nombre']  = $nombreGanador;
 $sala['finalizado_at']   = time();
+
+$premioNeto = 0;
+// ── Liquidación de Premio en Modo Payplay (RF-21) ─────────────────
+if (($sala['tipo_sala'] ?? 'free') === 'payplay') {
+    $pozoTotal = floatval($sala['pozo_total'] ?? (count($sala['jugadores']) * ($sala['buy_in'] ?? 0)));
+    $comisionPct = floatval($sala['comision_pct'] ?? 0.10);
+    $premioNeto = round($pozoTotal * (1 - $comisionPct), 2);
+    
+    $sala['premio_ganado'] = $premioNeto;
+    $sala['estado_financiero'] = 'REPARTIDA';
+    
+    acreditarPremioGanador($premioNeto, $codigo);
+}
+
 guardarSala($sala);
 
-jsonOk(['ganador' => true, 'nombre_ganador' => $nombreGanador]);
+jsonOk([
+    'ganador'        => true,
+    'nombre_ganador' => $nombreGanador,
+    'premio'         => $premioNeto,
+    'tipo_sala'      => $sala['tipo_sala'] ?? 'free'
+]);

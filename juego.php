@@ -11,22 +11,40 @@ $codigo = $_SESSION['codigo_sala'];
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jugando – BINGO</title>
+<title>Jugando – BINGO V2.1</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="page-top">
 
-  <!-- Header -->
+  <!-- Header V2.1 -->
   <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
-    <div>
-      <div class="logo-sm">BINGO</div>
-      <div style="font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">
-        Sala: <?= htmlspecialchars($codigo) ?>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <div>
+        <div class="logo-sm">BINGO</div>
+        <div style="font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">
+          Sala: <?= htmlspecialchars($codigo) ?>
+        </div>
       </div>
+      <span id="badge-tipo-juego" class="badge badge-yellow" style="display:none;font-size:0.72rem">Modo Payplay</span>
     </div>
-    <div id="hdr-info" style="font-size:0.82rem;color:var(--muted)"></div>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <div id="hdr-info" style="font-size:0.82rem;color:var(--muted)"></div>
+      <a href="wallet.php" target="_blank" class="nav-link-btn" style="font-size:0.75rem">🪙 Billetera</a>
+    </div>
   </header>
+
+  <!-- Banner Pozo en Vivo (Payplay) -->
+  <div class="prize-pool-banner" id="juego-pozo-banner" style="display:none;margin-bottom:1rem;padding:0.75rem 1.25rem">
+    <div>
+      <div class="prize-title">💰 Pozo Neto en Juego</div>
+      <div class="prize-amount" id="juego-pozo-neto" style="font-size:1.8rem">$ 0</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:0.75rem;color:var(--muted)" id="juego-pozo-total">Pozo Bruto: $0</div>
+      <div style="font-size:0.72rem;color:var(--yellow);margin-top:0.2rem">Comisión Rake 10%</div>
+    </div>
+  </div>
 
   <div class="game-grid">
     <!-- Columna principal -->
@@ -59,7 +77,7 @@ $codigo = $_SESSION['codigo_sala'];
       </div>
     </div>
 
-
+    <!-- Columna Lateral -->
     <div>
       <div class="card-sm" style="margin-bottom:1rem">
         <div class="section-label">Jugadores</div>
@@ -115,22 +133,30 @@ $codigo = $_SESSION['codigo_sala'];
   </div>
 </div>
 
-<!-- ── Audios del juego ─────────────────────────────────────────── -->
-<audio id="audio-balota" src="https://assets.mixkit.co/active_storage/sfx/1074/1074-preview.mp3"  preload="auto"></audio>
-<audio id="audio-marcar" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"  preload="auto"></audio>
-<audio id="audio-bingo"  src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"  preload="auto"></audio>
+<!-- Audios del juego -->
+<audio id="audio-balota" src="https://assets.mixkit.co/active_storage/sfx/1074/1074-preview.mp3" preload="auto"></audio>
+<audio id="audio-marcar" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+<audio id="audio-bingo"  src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" preload="auto"></audio>
 
-<!-- Overlay ganador - oculto por defecto -->
+<!-- Overlay ganador -->
 <div class="overlay" id="overlay-ganador" style="display:none">
   <div class="winner-card">
     <div style="font-size:4rem;margin-bottom:0.75rem">🏆</div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.35rem">¡Ganador!</p>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.35rem">¡Ganador Confirmado!</p>
     <div class="winner-name" id="nombre-ganador"></div>
+    <div id="box-premio-ganador" style="display:none;margin-top:0.75rem;padding:0.6rem 1rem;background:rgba(204,245,0,0.12);border:1px solid rgba(204,245,0,0.3);border-radius:10px">
+      <div style="font-size:0.78rem;color:var(--yellow);font-weight:600">PREMIO ACREDITADO A BILLETERA</div>
+      <div style="font-size:1.4rem;font-family:'Black Han Sans',sans-serif;color:#fff" id="premio-monto-ganador">$ 0</div>
+    </div>
     <p style="margin-top:1rem;color:var(--muted);font-size:0.82rem">La partida ha finalizado</p>
-    <a href="ganador.php" style="display:inline-block;margin-top:1.5rem;padding:0.75rem 2rem;
-       background:var(--accent);color:#fff;border-radius:12px;text-decoration:none;font-size:0.95rem">
-      Ver pantalla de ganador
-    </a>
+    <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:1.25rem;flex-wrap:wrap">
+      <a href="wallet.php" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--green);color:#11280d;font-weight:600;border-radius:12px;text-decoration:none;font-size:0.9rem">
+        🪙 Ir a Billetera
+      </a>
+      <a href="ganador.php" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--accent);color:#fff;border-radius:12px;text-decoration:none;font-size:0.9rem">
+        🎉 Ver Podio
+      </a>
+    </div>
   </div>
 </div>
 
@@ -147,17 +173,15 @@ let ultHistorial = 0;
 let hostId   = null;
 let redirigiendo = false;
 
-// ── Audio ───────────────────────────────────────────────────────
 function playAudio(id) {
   try {
     const a = document.getElementById(id);
-    if (!a || !a.src || a.src.includes('LINK_')) return; // src no configurado aún
+    if (!a || !a.src || a.src.includes('LINK_')) return;
     a.currentTime = 0;
-    a.play().catch(() => {}); // ignorar bloqueo autoplay
+    a.play().catch(() => {});
   } catch(e) {}
 }
 
-// ── Cambiar velocidad (host en partida) ─────────────────────────
 async function cambiarVelocidad() {
   const vel = parseInt(document.getElementById('sel-vel-juego').value);
   const msg = document.getElementById('msg-velocidad');
@@ -170,7 +194,6 @@ async function cambiarVelocidad() {
   setTimeout(() => msg.textContent = '', 3000);
 }
 
-// ── Inicialización ──────────────────────────────────────────────
 async function init() {
   const r = await fetch(`php/verificar_estado.php?accion=carton&codigo=${codigo}`);
   const d = await r.json();
@@ -179,19 +202,16 @@ async function init() {
   marcadas = d.marcadas || [];
   renderCarton();
   poll();
-  setInterval(poll, 3000);
+  setInterval(poll, 2500);
 }
 
-// ── Cartón ──────────────────────────────────────────────────────
 function renderCarton() {
   const g = document.getElementById('carton-grid');
   g.innerHTML = '';
-  // Cabeceras
   LETRAS.forEach(l => {
     const h = document.createElement('div');
     h.className = `col-header h${l}`; h.textContent = l; g.appendChild(h);
   });
-  // Celdas: carton[col][fila]
   for (let fila = 0; fila < 5; fila++) {
     for (let col = 0; col < 5; col++) {
       const val  = carton[col][fila];
@@ -204,32 +224,37 @@ function renderCarton() {
   }
 }
 
-// ── Marcar casilla ──────────────────────────────────────────────
 async function marcarCelda(val, cell) {
   if (cell.classList.contains('marcada')) return;
   const r = await fetch('php/verificar_estado.php', { method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ accion:'marcar', codigo, valor: val }) });
   const d = await r.json();
-  if (d.ok) { cell.classList.add('marcada'); marcadas.push(val); limpiarWarn(); playAudio('audio-marcar'); }
-  else {
+  if (d.ok) {
+    cell.classList.add('marcada');
+    marcadas.push(val);
+    limpiarWarn();
+    playAudio('audio-marcar');
+  } else {
     mostrarWarn(d.error || 'Esa ficha aún no ha salido');
     cell.classList.add('shake');
     setTimeout(() => cell.classList.remove('shake'), 380);
   }
 }
 
-// ── Cantar Bingo ────────────────────────────────────────────────
 async function cantarBingo() {
   const r = await fetch('php/cantar_bingo.php', { method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ codigo }) });
   const d = await r.json();
-  if (d.ok && d.ganador) { playAudio('audio-bingo'); mostrarGanador(d.nombre_ganador); }
-  else mostrarWarn(d.error || 'Bingo inválido – revisa tu cartón');
+  if (d.ok && d.ganador) {
+    playAudio('audio-bingo');
+    mostrarGanador(d.nombre_ganador, d.premio, d.tipo_sala);
+  } else {
+    mostrarWarn(d.error || 'Bingo inválido – revisa tu cartón');
+  }
 }
 
-// ── Polling de estado ───────────────────────────────────────────
 async function poll() {
   if (redirigiendo) return;
   try {
@@ -239,7 +264,20 @@ async function poll() {
     const sala = d.sala;
 
     if (sala.estado === 'cancelado') { mostrarCancelado(); return; }
-    if (sala.estado === 'finalizado') { mostrarGanador(sala.ganador_nombre); return; }
+    if (sala.estado === 'finalizado') { mostrarGanador(sala.ganador_nombre, sala.premio_ganado, sala.tipo_sala); return; }
+
+    // Host controls
+    const soyHost = sala.host_id === miId;
+    document.getElementById('ctrl-velocidad-host').style.display = soyHost ? 'block' : 'none';
+
+    // Payplay UI
+    if (sala.tipo_sala === 'payplay') {
+      document.getElementById('badge-tipo-juego').style.display = 'inline-block';
+      document.getElementById('juego-pozo-banner').style.display = 'flex';
+      const neto = Number(sala.pozo_neto) || Math.round(Number(sala.pozo_total) * 0.9);
+      document.getElementById('juego-pozo-neto').textContent = '$ ' + neto.toLocaleString();
+      document.getElementById('juego-pozo-total').textContent = 'Pozo Bruto: $' + Number(sala.pozo_total).toLocaleString();
+    }
 
     // Jugadores sidebar
     document.getElementById('jugadores-mini').innerHTML = sala.jugadores.map(j =>
@@ -262,7 +300,7 @@ async function poll() {
     // Timer
     if (sala.proxima_ficha_at) {
       const restante = Math.max(0, sala.proxima_ficha_at - (Date.now()/1000));
-      const total    = sala.intervalo_fichas || 12;
+      const total    = sala.intervalo_fichas || 10;
       const pct      = Math.round((restante / total) * 100);
       const fill     = document.getElementById('timer-fill');
       fill.style.width = pct + '%';
@@ -271,7 +309,6 @@ async function poll() {
   } catch(e) {}
 }
 
-// ── Actualizar ficha actual + historial ─────────────────────────
 function actualizarFicha(historial) {
   if (!historial.length) return;
   const ultima = historial[historial.length - 1];
@@ -288,15 +325,12 @@ function actualizarFicha(historial) {
   document.getElementById('bola-sub').textContent     = `Ficha #${historial.length} · Busca ${ultima} en tu cartón`;
   document.getElementById('n-historial').textContent  = historial.length;
 
-  // Strip (últimas 30, más reciente primero)
   document.getElementById('strip-historial').innerHTML = [...historial].reverse().slice(0,30).map(b => {
     const l = b[0];
     return `<div class="mini-ball" style="border-color:${COLORES[l]};background:${BG_COL[l]};color:${COLORES[l]}">${b.slice(1)}</div>`;
   }).join('');
 }
 
-// ── Ganador ─────────────────────────────────────────────────────
-// ── Abandonar partida ───────────────────────────────────────────
 function confirmarAbandonar() {
   const btn = document.getElementById('btn-abandonar');
   if (btn.dataset.confirmando === '1') {
@@ -326,19 +360,24 @@ async function abandonarPartida() {
   location.href = 'index.php';
 }
 
-// ── Cancelación (todos abandonaron) ─────────────────────────────
 function mostrarCancelado() {
   if (redirigiendo) return;
   redirigiendo = true;
   document.getElementById('overlay-cancelado').style.display = 'flex';
 }
 
-function mostrarGanador(nombre) {
+function mostrarGanador(nombre, premio, tipoSala) {
   if (redirigiendo) return;
   redirigiendo = true;
   sessionStorage.setItem('bingo_ganador', nombre);
   sessionStorage.setItem('bingo_codigo', codigo);
   document.getElementById('nombre-ganador').textContent = nombre;
+
+  if (tipoSala === 'payplay' && premio > 0) {
+    document.getElementById('box-premio-ganador').style.display = 'block';
+    document.getElementById('premio-monto-ganador').textContent = '$ ' + Number(premio).toLocaleString();
+  }
+
   document.getElementById('overlay-ganador').style.display = 'flex';
 }
 

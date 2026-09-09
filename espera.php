@@ -11,23 +11,46 @@ $codigo = $_SESSION['codigo_sala'];
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sala de espera – BINGO</title>
+<title>Sala de espera – BINGO V2.1</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="page-center">
   <div style="width:100%;max-width:520px">
 
-    <div style="margin-bottom:1.5rem">
-      <div class="logo-sm">BINGO</div>
-      <p class="tagline">Sala de espera</p>
+    <div style="margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div class="logo-sm">BINGO</div>
+        <p class="tagline">Sala de espera</p>
+      </div>
+      <a href="wallet.php" class="nav-link-btn" style="font-size:0.75rem">
+        🪙 Mi Billetera
+      </a>
+    </div>
+
+    <!-- Banner Pozo en Vivo para Modo Payplay -->
+    <div class="prize-pool-banner" id="banner-pozo" style="display:none">
+      <div>
+        <div class="prize-title">💰 Pozo Acumulado (Prize Pool)</div>
+        <div class="prize-amount" id="pozo-acumulado">$ 0</div>
+        <div class="prize-meta" id="pozo-meta">Buy-in: $0 | Rake: 10%</div>
+      </div>
+      <div style="text-align:right">
+        <span class="badge badge-yellow" style="font-size:0.75rem">Modo Payplay</span>
+        <div style="font-size:0.75rem;color:var(--green);margin-top:0.35rem" id="pozo-neto-label">
+          Premio Neto: $0
+        </div>
+      </div>
     </div>
 
     <div class="card">
       <!-- Header sala -->
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
         <div>
-          <div class="section-label">Sala</div>
+          <div class="section-label">
+            <span>Sala</span>
+            <span id="badge-tipo-sala" class="badge badge-green" style="margin-left:0.4rem;display:none">Gratuita</span>
+          </div>
           <div style="font-size:1.2rem;font-weight:500" id="nombre-sala">Cargando...</div>
         </div>
         <div style="text-align:right">
@@ -71,7 +94,6 @@ $codigo = $_SESSION['codigo_sala'];
             <option value="reducido" style="background:#1a3a14;color:#fff">Reducida (A00-19, B20-39…)</option>
           </select>
         </div>
-
       </div>
       <button class="btn btn-blue" id="btn-iniciar" onclick="iniciarPartida()" disabled>Iniciar partida</button>
       <p style="text-align:center;font-size:0.75rem;color:var(--muted);margin-top:0.4rem">
@@ -110,7 +132,25 @@ async function poll() {
 
     document.getElementById('nombre-sala').textContent = sala.nombre;
     document.getElementById('n-jugadores').textContent = sala.jugadores.length;
-    renderJugadores(sala.jugadores, sala.host_id);
+    renderJugadores(sala.jugadores, sala.host_id, sala.tipo_sala);
+
+    // Render Pozo Payplay
+    const bannerPozo = document.getElementById('banner-pozo');
+    const badgeTipo  = document.getElementById('badge-tipo-sala');
+    if (sala.tipo_sala === 'payplay') {
+      bannerPozo.style.display = 'flex';
+      badgeTipo.style.display = 'none';
+      const buyIn = Number(sala.buy_in) || 0;
+      const totalPozo = (sala.jugadores.length * buyIn);
+      const netoPozo  = Math.round(totalPozo * (1 - (sala.comision_pct || 0.10)));
+      document.getElementById('pozo-acumulado').textContent = '$ ' + totalPozo.toLocaleString();
+      document.getElementById('pozo-meta').textContent = `Buy-in: $${buyIn.toLocaleString()} | Rake: 10%`;
+      document.getElementById('pozo-neto-label').textContent = `Premio Neto: $${netoPozo.toLocaleString()}`;
+    } else {
+      bannerPozo.style.display = 'none';
+      badgeTipo.style.display = 'inline-block';
+      badgeTipo.textContent = 'Gratuita';
+    }
 
     const soyHost = sala.host_id === miId;
     document.getElementById('ctrl-host').style.display    = soyHost ? '' : 'none';
@@ -121,7 +161,7 @@ async function poll() {
   } catch(e) {}
 }
 
-function renderJugadores(jugadores, hostId) {
+function renderJugadores(jugadores, hostId, tipoSala) {
   const el = document.getElementById('lista-jugadores');
   if (!jugadores.length) { el.innerHTML = '<div style="font-size:0.88rem;color:var(--muted);padding:0.5rem 0">Sin jugadores aún...</div>'; return; }
   el.innerHTML = jugadores.map(j => {
@@ -130,6 +170,7 @@ function renderJugadores(jugadores, hostId) {
     return `<div class="player-row">
       <div class="avatar ${esHost?'av-host':'av-player'}">${esc(ini)}</div>
       <span style="flex:1;font-size:0.9rem">${esc(j.nombre)}</span>
+      ${tipoSala === 'payplay' ? '<span class="tx-badge tx-buyin" style="font-size:0.68rem">Escrow OK</span>' : ''}
       ${esHost ? '<span class="badge badge-yellow">Host</span>' : ''}
       ${esYo   ? '<span class="badge badge-green">Tú</span>'   : ''}
     </div>`;
