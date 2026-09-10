@@ -1,0 +1,9 @@
+# Archivos temporales de salas de juego
+data/room_*.json
+
+# Archivos de sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
