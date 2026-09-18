@@ -1,9 +1,18 @@
 # Archivos temporales de salas de juego
 data/room_*.json
 
+# Variables de entorno (credenciales - NUNCA subir)
+.env
+
 # Archivos de sistema y editores
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 *.log
+
+# Dependencias
+node_modules/
+
+# Uploads y documentos KYC subidos por usuarios
+uploads/
