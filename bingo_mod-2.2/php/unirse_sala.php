@@ -41,6 +41,16 @@ $_SESSION['usuario']['nickname'] = $nombre;
 $sala['jugadores'][] = ['id' => $jugadorId, 'nombre' => $nombre, 'buy_in_pagado' => $buyIn];
 guardarSala($sala);
 
+// ── Sincronizar con BD ─────────────────────────────────────────────────────────
+if (isset($_SESSION['usuario_id'])) {
+    $usuarioId = (int)$_SESSION['usuario_id'];
+    $salaId = obtenerSalaIdPorCodigo($codigo);
+    if ($salaId) {
+        $posicion = count($sala['jugadores']);
+        agregarJugadorSalaBD($salaId, $usuarioId, $buyIn, $posicion);
+    }
+}
+
 jsonOk([
     'codigo'     => $codigo,
     'tipo_sala'  => $tipoSala,

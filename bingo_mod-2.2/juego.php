@@ -5,13 +5,24 @@ if (!isset($_SESSION['jugador_id']) || !isset($_SESSION['codigo_sala'])) {
 }
 $miId   = $_SESSION['jugador_id'];
 $codigo = $_SESSION['codigo_sala'];
+
+// Verificar si es admin (para panel V2.2)
+$esAdmin = false;
+if (isset($_SESSION['usuario_id'])) {
+    require_once __DIR__ . '/database/db.php';
+    global $pdo;
+    $stmt = $pdo->prepare('SELECT rol FROM usuarios WHERE id = ?');
+    $stmt->execute([$_SESSION['usuario_id']]);
+    $userData = $stmt->fetch();
+    $esAdmin = ($userData && $userData['rol'] === 'ADMIN');
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jugando – BINGO V2.1</title>
+<title>Jugando – BANG V2.1</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,7 +32,7 @@ $codigo = $_SESSION['codigo_sala'];
   <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
     <div style="display:flex;align-items:center;gap:0.75rem">
       <div>
-        <div class="logo-sm">BINGO</div>
+        <div class="logo-sm">BANG</div>
         <div style="font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">
           Sala: <?= htmlspecialchars($codigo) ?>
         </div>
@@ -386,6 +397,9 @@ function limpiarWarn()    { document.getElementById('warn-msg').textContent=''; 
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 init();
+</script>
+<script>
+  window.__ES_ADMIN__ = <?= $esAdmin ? 'true' : 'false' ?>;
 </script>
 <script src="js/panel_v22.js"></script>
 </body>

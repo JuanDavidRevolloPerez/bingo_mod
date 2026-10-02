@@ -5,9 +5,19 @@
 (function () {
   'use strict';
 
+  // Verificar si el usuario es admin (solo admins pueden ver el panel)
+  function esAdmin() {
+    // En producción, verificar desde el servidor
+    // Por ahora, verificamos una variable global que se setea en el PHP
+    return window.__ES_ADMIN__ === true || window.__ES_ADMIN__ === '1';
+  }
+
   // 1. Inyectar Estructura HTML del FAB, Drawer, Checkout Modal y Toasts
   function inyectarInterfazV22() {
     if (document.getElementById('v22-fab')) return;
+    
+    // Si no es admin, no mostrar el panel
+    if (!esAdmin()) return;
 
     const div = document.createElement('div');
     div.id = 'v22-container';

@@ -11,7 +11,7 @@ if (!$body) jsonError('Datos inválidos');
 $nombre     = sanitizar($body['nombre'] ?? '');
 $nombreSala = sanitizar($body['nombre_sala'] ?? '');
 $tipoSala   = sanitizar($body['tipo_sala'] ?? 'free');
-$buyIn      = floatval($body['buy_in'] ?? 0);
+$buyIn      = intval($body['buy_in'] ?? 0);
 
 if (!$nombre || !$nombreSala)       jsonError('Completa todos los campos');
 if (strlen($nombre) > 20)           jsonError('Nombre demasiado largo (máx 20)');
@@ -19,8 +19,8 @@ if (strlen($nombreSala) > 30)       jsonError('Nombre de sala demasiado largo (m
 
 // Validaciones para Modo Payplay
 if ($tipoSala === 'payplay') {
-    if ($buyIn < 1000) {
-        jsonError('El Buy-in mínimo para salas Payplay es de 1.000 fichas');
+    if ($buyIn < 1) {
+        jsonError('El Buy-in mínimo para salas Payplay es de 1 ficha ($10.000 COP)');
     }
     $billetera = obtenerBilletera();
     if ($billetera['saldo_disponible'] < $buyIn) {
@@ -66,4 +66,16 @@ $sala = [
 ];
 
 guardarSala($sala);
+
+// ── Sincronizar con BD ─────────────────────────────────────────────────────────
+// Si el usuario está logueado, guardar en BD
+if (isset($_SESSION['usuario_id'])) {
+    $usuarioId = (int)$_SESSION['usuario_id'];
+    guardarSalaBD($sala);
+    $salaId = obtenerSalaIdPorCodigo($codigo);
+    if ($salaId) {
+        agregarJugadorSalaBD($salaId, $usuarioId, $buyIn, 1);
+    }
+}
+
 jsonOk(['codigo' => $codigo, 'tipo_sala' => $tipoSala, 'buy_in' => $buyIn]);

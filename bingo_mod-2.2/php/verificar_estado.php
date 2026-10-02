@@ -18,6 +18,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $accion === 'estado') {
     if ($sala['estado'] === 'jugando') {
         generarSiguienteFicha($sala);
         guardarSala($sala);
+        
+        // Sincronizar ficha con BD usando transacción
+        if (isset($_SESSION['usuario_id']) && !empty($sala['historial'])) {
+            try {
+                require_once __DIR__ . '/../database/db.php';
+                global $pdo;
+                
+                $pdo->beginTransaction();
+                
+                $salaId = obtenerSalaIdPorCodigo($codigo);
+                if ($salaId) {
+                    $ultimaFicha = end($sala['historial']);
+                    agregarFichaHistorialBD($salaId, $ultimaFicha);
+                }
+                
+                $pdo->commit();
+            } catch (\PDOException $e) {
+                $pdo->rollBack();
+                error_log('[VERIFICAR_ESTADO] Error sincronizando ficha: ' . $e->getMessage());
+            }
+        }
     }
 
     $pozoTotal   = floatval($sala['pozo_total'] ?? (count($sala['jugadores']) * ($sala['buy_in'] ?? 0)));
@@ -81,6 +102,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!in_array($valor, $sala['cartones'][$miId]['marcadas'])) {
             $sala['cartones'][$miId]['marcadas'][] = $valor;
             guardarSala($sala);
+            
+            // Sincronizar con BD usando transacción
+            if (isset($_SESSION['usuario_id'])) {
+                try {
+                    require_once __DIR__ . '/../database/db.php';
+                    global $pdo;
+                    
+                    $pdo->beginTransaction();
+                    
+                    $salaId = obtenerSalaIdPorCodigo($codigoPost);
+                    if ($salaId) {
+                        $jugadorSalaId = obtenerJugadorSalaId($salaId, (int)$_SESSION['usuario_id']);
+                        if ($jugadorSalaId) {
+                            actualizarCartonBD($jugadorSalaId, $sala['cartones'][$miId]['marcadas']);
+                        }
+                    }
+                    
+                    $pdo->commit();
+                } catch (\PDOException $e) {
+                    $pdo->rollBack();
+                    error_log('[MARCAR_CASILLA] Error sincronizando con BD: ' . $e->getMessage());
+                }
+            }
         }
         jsonOk();
     }

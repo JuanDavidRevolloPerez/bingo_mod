@@ -1,6 +1,6 @@
 <?php
 /**
- * db.php - Conexión PDO a MySQL para Bingo Online
+ * db.php - Conexión PDO a MySQL para BANG ONLINE
  *
  * Carga credenciales desde variables de entorno (archivo .env)
  * o usa valores por defecto de XAMPP local.
@@ -11,7 +11,7 @@
  */
 
 // ── Carga .env si existe ─────────────────────────────────────────────────────
-$envFile = __DIR__ . '/../../.env';
+$envFile = __DIR__ . '/../.env';
 if (file_exists($envFile)) {
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) continue;
@@ -45,6 +45,9 @@ $options = [
 // ── Instancia PDO (singleton simple) ────────────────────────────────────────
 try {
     $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+    // Exponer la conexión global para funciones que usan `global $pdo`
+    // tras un `require_once` de este archivo dentro de su ámbito.
+    $GLOBALS['pdo'] = $pdo;
 } catch (PDOException $e) {
     // En producción: loguear el error, no mostrarlo al cliente
     error_log('[DB] Error de conexión: ' . $e->getMessage());

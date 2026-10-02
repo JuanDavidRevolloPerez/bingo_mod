@@ -1,7 +1,7 @@
 <?php
 /**
  * login.php - Módulo de Inicio de Sesión
- * Bingo Online V2.2 – Multijugador & Payplay
+ * BANG ONLINE V2.2 – Multijugador & Payplay
  */
 session_start();
 
@@ -19,7 +19,7 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar Sesión – BINGO ONLINE</title>
+  <title>Iniciar Sesión – BANG ONLINE</title>
   <link rel="stylesheet" href="style.css">
   <style>
     /* ── Auth Pages (Mismos estilos que register.php) ─────────────────────────────── */
@@ -293,7 +293,7 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
   <div class="auth-card">
 
     <div class="auth-header">
-      <div class="logo" style="font-size:2.2rem">BINGO</div>
+      <div class="logo" style="font-size:2.2rem">BANG</div>
       <div class="auth-title">Bienvenido de nuevo</div>
       <div class="auth-subtitle">Ingresa a tu cuenta para jugar</div>
     </div>

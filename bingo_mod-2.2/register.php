@@ -1,14 +1,12 @@
 <?php
 /**
  * register.php - Módulo de Registro de Usuarios
- * Bingo Online V2.2 – Multijugador & Payplay
+ * BANG ONLINE V2.2 – Multijugador & Payplay
  */
 session_start();
 
-// Si ya está logueado, redirigir al inicio
-if (isset($_SESSION['usuario_id'])) {
-    header('Location: index.php'); exit;
-}
+// Si ya está logueado, permitir igualmente ver el formulario de registro
+// (se comentó la redirección automática a index.php)
 
 $error   = $_SESSION['reg_error']   ?? null;
 $success = $_SESSION['reg_success'] ?? null;
@@ -19,8 +17,8 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crear Cuenta – BINGO ONLINE</title>
-  <meta name="description" content="Regístrate gratis en Bingo Online y juega partidas multijugador con amigos. Modo gratuito y modo Payplay disponibles.">
+  <title>Crear Cuenta – BANG ONLINE</title>
+  <meta name="description" content="Regístrate gratis en BANG ONLINE y juega partidas multijugador con amigos. Modo gratuito y modo Payplay disponibles.">
   <link rel="stylesheet" href="style.css">
   <style>
     /* ── Auth Pages ─────────────────────────────── */
@@ -38,14 +36,34 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
     .auth-card {
       width: 100%;
       max-width: 440px;
-      background: rgba(255,255,255,0.05);
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 24px;
       padding: 2.25rem 2rem;
       backdrop-filter: blur(20px);
-      box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+      box-shadow: 0 32px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
       animation: slideUp 0.45s cubic-bezier(0.4,0,0.2,1);
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
+
+    .auth-card:hover {
+      border-color: rgba(255,255,255,0.18);
+      box-shadow: 0 32px 64px rgba(0,0,0,0.5), 0 0 40px rgba(0,148,217,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    /* Subtítulos de sección */
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(232,232,232,0.35);
+      margin: 1.25rem 0 0.85rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .section-title:first-child { margin-top: 0; }
 
     @keyframes slideUp {
       from { transform: translateY(30px); opacity: 0; }
@@ -84,7 +102,12 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       text-transform: uppercase;
       color: rgba(232,232,232,0.45);
       margin-bottom: 0.35rem;
+      transition: color 0.2s;
     }
+
+    .input-group:focus-within label { color: var(--accent); }
+
+    .input-group:focus-within .input-icon { opacity: 1; }
 
     .input-group .input-wrap {
       position: relative;
@@ -124,12 +147,23 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
 
     .input-group input.input-error {
       border-color: rgba(249,52,22,0.6);
+      animation: shake 0.3s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
     }
 
     .field-error {
       font-size: 0.75rem;
-      color: #ff6b6b;
-      margin-top: 0.3rem;
+      color: #ff8c7a;
+      background: rgba(249,52,22,0.08);
+      border: 1px solid rgba(249,52,22,0.25);
+      border-radius: 8px;
+      padding: 0.35rem 0.6rem;
+      margin-top: 0.35rem;
       display: none;
     }
 
@@ -259,14 +293,15 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       padding: 0.9rem;
       border: none;
       border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent) 0%, #0078b0 100%);
+      transition: all 0.25s ease;
+      background: linear-gradient(135deg, var(--accent) 0%, #0078b0 50%, var(--accent) 100%);
+      background-size: 200% auto;
       color: #fff;
       font-family: 'DM Sans', sans-serif;
       font-size: 1rem;
       font-weight: 600;
       letter-spacing: 0.02em;
       cursor: pointer;
-      transition: all 0.2s;
       position: relative;
       overflow: hidden;
     }
@@ -281,7 +316,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
     }
 
     .btn-auth:hover::after { opacity: 1; }
-    .btn-auth:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,148,217,0.4); }
+    .btn-auth:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,148,217,0.4); background-position: right center; }
     .btn-auth:active { transform: translateY(0); }
     .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
@@ -376,7 +411,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
 
     <!-- Header -->
     <div class="auth-header">
-      <div class="logo" style="font-size:2.2rem">BINGO</div>
+      <div class="logo" style="font-size:2.2rem">BANG</div>
       <div class="auth-title">Crear tu cuenta</div>
       <div class="auth-subtitle">Únete y empieza a jugar en segundos</div>
     </div>
@@ -404,6 +439,8 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
 
     <!-- Formulario de Registro -->
     <form id="form-registro" novalidate>
+
+      <div class="section-title">Datos de acceso</div>
 
       <!-- Nickname -->
       <div class="input-group">
@@ -482,10 +519,75 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
         <div class="field-error" id="err-pass2">Las contraseñas no coinciden</div>
       </div>
 
+      <div class="section-title">Datos personales</div>
+
+      <!-- Tipo de documento -->
+      <div class="input-group">
+        <label for="reg-tipo-doc">Tipo de documento</label>
+        <div class="input-wrap">
+          <span class="input-icon">🪪</span>
+          <select id="reg-tipo-doc" name="tipo_documento" required>
+            <option value="">Selecciona...</option>
+            <option value="CC">C.C. - Cédula de Ciudadanía</option>
+            <option value="CE">C.E. - Cédula de Extranjería</option>
+          </select>
+        </div>
+        <div class="field-error" id="err-tipo-doc">Selecciona un tipo de documento</div>
+      </div>
+
+      <!-- Número de documento -->
+      <div class="input-group">
+        <label for="reg-num-doc">Número de documento</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔢</span>
+          <input
+            type="text"
+            id="reg-num-doc"
+            name="numero_documento"
+            placeholder="Ej. 1020304050"
+            maxlength="20"
+            required
+          >
+        </div>
+        <div class="field-error" id="err-num-doc">Ingresa tu número de documento</div>
+      </div>
+
+      <!-- Teléfono -->
+      <div class="input-group">
+        <label for="reg-telefono">Teléfono</label>
+        <div class="input-wrap">
+          <span class="input-icon">📱</span>
+          <input
+            type="tel"
+            id="reg-telefono"
+            name="telefono"
+            placeholder="Ej. 3001234567"
+            maxlength="15"
+            required
+          >
+        </div>
+        <div class="field-error" id="err-telefono">Ingresa un teléfono válido</div>
+      </div>
+
+      <!-- Fecha de nacimiento -->
+      <div class="input-group">
+        <label for="reg-fecha-nac">Fecha de nacimiento</label>
+        <div class="input-wrap">
+          <span class="input-icon">📅</span>
+          <input
+            type="date"
+            id="reg-fecha-nac"
+            name="fecha_nacimiento"
+            required
+          >
+        </div>
+        <div class="field-error" id="err-fecha-nac">Debes ser mayor de edad (18+)</div>
+      </div>
+
       <!-- Términos y condiciones -->
       <label class="terms-row" for="reg-terms">
         <input type="checkbox" id="reg-terms" name="terminos" required>
-        <span>Acepto los <a href="#">Términos y Condiciones</a> y la <a href="#">Política de Privacidad</a> de Bingo Online.</span>
+        <span>Acepto los <a href="#">Términos y Condiciones</a> y la <a href="#">Política de Privacidad</a> de BANG ONLINE.</span>
       </label>
 
       <!-- Submit -->
@@ -510,6 +612,10 @@ const nick     = document.getElementById('reg-nickname');
 const email    = document.getElementById('reg-email');
 const pass     = document.getElementById('reg-pass');
 const pass2    = document.getElementById('reg-pass2');
+const tipoDoc  = document.getElementById('reg-tipo-doc');
+const numDoc   = document.getElementById('reg-num-doc');
+const telefono = document.getElementById('reg-telefono');
+const fechaNac = document.getElementById('reg-fecha-nac');
 const terms    = document.getElementById('reg-terms');
 const btnReg   = document.getElementById('btn-registrar');
 
@@ -606,6 +712,27 @@ form.addEventListener('submit', async (e) => {
   if (pass2.value !== pass.value) {
     showErr('pass2', true); markInput(pass2, true); valid = false;
   }
+  if (!tipoDoc.value) {
+    showErr('tipo-doc', true); markInput(tipoDoc, true); valid = false;
+  }
+  if (!numDoc.value.trim()) {
+    showErr('num-doc', true); markInput(numDoc, true); valid = false;
+  }
+  if (!/^[0-9]{7,15}$/.test(telefono.value.trim())) {
+    showErr('telefono', true); markInput(telefono, true); valid = false;
+  }
+  if (!fechaNac.value) {
+    showErr('fecha-nac', true); markInput(fechaNac, true); valid = false;
+  } else {
+    const fecha = new Date(fechaNac.value);
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fecha.getFullYear();
+    const mes = hoy.getMonth() - fecha.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) edad--;
+    if (edad < 18) {
+      showErr('fecha-nac', true); markInput(fechaNac, true); valid = false;
+    }
+  }
   if (!terms.checked) {
     showAlert('Debes aceptar los términos y condiciones', 'error'); valid = false;
   }
@@ -623,7 +750,11 @@ form.addEventListener('submit', async (e) => {
       body:    JSON.stringify({
         nickname: nick.value.trim(),
         email:    email.value.trim().toLowerCase(),
-        password: pass.value
+        password: pass.value,
+        tipo_documento: tipoDoc.value,
+        numero_documento: numDoc.value.trim(),
+        telefono: telefono.value.trim(),
+        fecha_nacimiento: fechaNac.value
       })
     });
 

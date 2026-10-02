@@ -37,7 +37,7 @@
     </div>
 
     <div style="margin-top:1rem">
-      <div class="logo-sm">BINGO</div>
+      <div class="logo-sm">BANG</div>
       <p class="tagline">Online Multiplayer</p>
     </div>
   </div>

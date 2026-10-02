@@ -11,8 +11,7 @@
 
 declare(strict_types=1);
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-
+require_once __DIR__ . '/../../php/funciones.php';
 require_once __DIR__ . '/../../database/db.php';
 
 $clientId     = $_ENV['GOOGLE_CLIENT_ID']     ?? '';
@@ -139,40 +138,17 @@ if (isset($_GET['code'])) {
             
             // Asegurarnos de que el nickname sea único, o agregarle números
             $baseNickname = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', $name));
-            if (strlen($baseNickname) < 3) $baseNickname = 'User' . rand(100, 999);
+            if (strlen($baseNickname) < 3) $baseNickname = 'User' . random_int(100, 999);
             
             $nickname = substr($baseNickname, 0, 25);
             $stmtCheck = $pdo->prepare('SELECT id FROM usuarios WHERE nickname = ? LIMIT 1');
             $stmtCheck->execute([$nickname]);
             if ($stmtCheck->fetch()) {
-                $nickname .= rand(1000, 9999);
+                $nickname .= random_int(1000, 9999);
             }
             
-            $pdo->beginTransaction();
-            
-            // Insertar usuario sin password_hash
-            $stmtUser = $pdo->prepare(
-                'INSERT INTO usuarios (nickname, email, google_id, nivel_verificacion, rol, estado)
-                 VALUES (?, ?, ?, 0, \'JUGADOR\', \'ACTIVO\')'
-            );
-            $stmtUser->execute([$nickname, $email, $googleId]);
-            $userId = (int) $pdo->lastInsertId();
-            
-            // Crear billetera
-            $stmtBill = $pdo->prepare(
-                'INSERT INTO billeteras (usuario_id, saldo_disponible, saldo_retenido)
-                 VALUES (?, 0.00, 0.00)'
-            );
-            $stmtBill->execute([$userId]);
-            
-            // Crear registro KYC pendiente
-            $stmtKyc = $pdo->prepare(
-                'INSERT INTO verificaciones_kyc (usuario_id, estado)
-                 VALUES (?, \'PENDIENTE\')'
-            );
-            $stmtKyc->execute([$userId]);
-            
-            $pdo->commit();
+            // Usar función centralizada para crear usuario completo
+            $userId = crearUsuarioCompleto($nickname, $email, null, $googleId);
             
             $_SESSION['login_success'] = '¡Cuenta creada exitosamente con Google!';
         }

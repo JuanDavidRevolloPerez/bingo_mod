@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   BINGO ONLINE – Hoja de estilos global
+   BANG ONLINE – Hoja de estilos global
    ═══════════════════════════════════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
@@ -12,16 +12,16 @@
 }
 
 :root {
-  --bg: #1a3a14;
-  --accent: #0094d9;
-  --green: #56d726;
-  --yellow: #ccf500;
-  --red: #f93416;
-  --text: #E8E8E8;
-  --muted: rgba(232, 232, 232, 0.4);
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface2: rgba(255, 255, 255, 0.08);
-  --border: rgba(255, 255, 255, 0.1);
+  --bg: #0F172A;
+  --accent: #F97316;
+  --green: #10B981;
+  --yellow: #F59E0B;
+  --red: #EF4444;
+  --text: #FFFFFF;
+  --muted: rgba(255, 255, 255, 0.5);
+  --surface: rgba(30, 41, 59, 0.85);
+  --surface2: rgba(30, 41, 59, 0.95);
+  --border: rgba(255, 255, 255, 0.12);
   --radius: 16px;
   --radius-sm: 10px;
 }
@@ -47,7 +47,7 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(26, 58, 20, 0.89);
+  background: rgba(15, 23, 42, 0.92);
   z-index: 0;
 }
 
@@ -286,27 +286,27 @@ input[type="text"]::placeholder {
 }
 
 .badge-yellow {
-  background: rgba(245, 212, 0, 0.12);
+  background: rgba(245, 158, 11, 0.12);
   color: var(--yellow);
-  border: 1px solid rgba(245, 212, 0, 0.25);
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 .badge-green {
-  background: rgba(86, 215, 38, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   color: var(--green);
-  border: 1px solid rgba(86, 215, 38, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .badge-blue {
-  background: rgba(0, 148, 217, 0.12);
+  background: rgba(249, 115, 22, 0.12);
   color: var(--accent);
-  border: 1px solid rgba(0, 148, 217, 0.25);
+  border: 1px solid rgba(249, 115, 22, 0.25);
 }
 
 /* ── Code badge ── */
 .code-badge {
-  background: rgba(0, 148, 217, 0.12);
-  border: 1px solid rgba(0, 148, 217, 0.3);
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.3);
   border-radius: var(--radius-sm);
   padding: 0.4rem 1rem;
   font-family: 'Black Han Sans', sans-serif;
@@ -353,15 +353,15 @@ input[type="text"]::placeholder {
 }
 
 .av-host {
-  background: rgba(245, 212, 0, 0.18);
+  background: rgba(245, 158, 11, 0.18);
   color: var(--yellow);
-  border: 1px solid rgba(245, 212, 0, 0.3);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .av-player {
-  background: rgba(0, 148, 217, 0.14);
+  background: rgba(249, 115, 22, 0.14);
   color: var(--accent);
-  border: 1px solid rgba(0, 148, 217, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.2);
 }
 
 /* ── Status dot ── */
@@ -471,23 +471,23 @@ input[type="text"]::placeholder {
 }
 
 .hA {
-  color: #0094d9;
+  color: #F97316;
 }
 
 .hB {
-  color: #56d726;
+  color: #10B981;
 }
 
 .hC {
-  color: #f5d400;
+  color: #F59E0B;
 }
 
 .hD {
-  color: #f93416;
+  color: #EF4444;
 }
 
 .hE {
-  color: #a855f7;
+  color: #60A5FA;
 }
 
 .cell {
@@ -512,9 +512,9 @@ input[type="text"]::placeholder {
 }
 
 .cell.marcada {
-  background: rgba(245, 212, 0, 0.22);
-  border-color: rgba(245, 212, 0, 0.55);
-  color: var(--yellow);
+  background: rgba(249, 115, 22, 0.25);
+  border-color: rgba(249, 115, 22, 0.6);
+  color: #F97316;
 }
 
 .cell.marcada::after {
@@ -523,7 +523,7 @@ input[type="text"]::placeholder {
   top: 2px;
   right: 4px;
   font-size: 0.55rem;
-  color: var(--yellow);
+  color: #F97316;
 }
 
 .cell.shake {
@@ -559,7 +559,7 @@ input[type="text"]::placeholder {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(26, 58, 20, 0.97);
+  background: rgba(15, 23, 42, 0.97);
   z-index: 200;
   display: flex;
   align-items: center;
@@ -664,7 +664,7 @@ input[type="text"]::placeholder {
   align-items: center;
   justify-content: space-between;
   padding: 0.85rem 1.5rem;
-  background: rgba(14, 33, 11, 0.75);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
   gap: 1rem;
@@ -688,8 +688,8 @@ input[type="text"]::placeholder {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(204, 245, 0, 0.08);
-  border: 1px solid rgba(204, 245, 0, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
   padding: 0.4rem 0.85rem;
   border-radius: 50px;
   color: #fff;
@@ -700,9 +700,9 @@ input[type="text"]::placeholder {
 }
 
 .chip-saldo:hover {
-  background: rgba(204, 245, 0, 0.16);
+  background: rgba(245, 158, 11, 0.16);
   border-color: var(--yellow);
-  box-shadow: 0 0 15px rgba(204, 245, 0, 0.2);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
 
 .nav-link-btn {
@@ -761,7 +761,7 @@ input[type="text"]::placeholder {
 }
 
 .mode-btn.active.payplay-active {
-  background: linear-gradient(135deg, rgba(204, 245, 0, 0.15), rgba(0, 148, 217, 0.2));
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(249, 115, 22, 0.2));
   border-color: var(--yellow);
   color: #fff;
 }
@@ -803,16 +803,16 @@ input[type="text"]::placeholder {
 
 .buyin-chip.selected {
   background: var(--yellow);
-  color: #11280d;
+  color: #0F172A;
   border-color: #fff;
-  box-shadow: 0 0 16px rgba(204, 245, 0, 0.35);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
   transform: translateY(-2px);
 }
 
 /* ── Prize Pool Live Banner ── */
 .prize-pool-banner {
-  background: linear-gradient(135deg, rgba(204, 245, 0, 0.12), rgba(0, 148, 217, 0.18));
-  border: 1px solid rgba(204, 245, 0, 0.35);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(249, 115, 22, 0.18));
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: var(--radius);
   padding: 1rem 1.25rem;
   margin-bottom: 1.25rem;
@@ -833,7 +833,7 @@ input[type="text"]::placeholder {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(204, 245, 0, 0.08) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -875,13 +875,13 @@ input[type="text"]::placeholder {
 }
 
 .balance-card.highlight {
-  border-color: rgba(204, 245, 0, 0.3);
-  background: linear-gradient(135deg, rgba(204, 245, 0, 0.05), rgba(255, 255, 255, 0.05));
+  border-color: rgba(245, 158, 11, 0.3);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(255, 255, 255, 0.05));
 }
 
 .balance-card.escrow {
-  border-color: rgba(0, 148, 217, 0.3);
-  background: linear-gradient(135deg, rgba(0, 148, 217, 0.05), rgba(255, 255, 255, 0.05));
+  border-color: rgba(249, 115, 22, 0.3);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), rgba(255, 255, 255, 0.05));
 }
 
 .balance-num {
@@ -892,8 +892,8 @@ input[type="text"]::placeholder {
 }
 
 .badge-kyc-0 { background: rgba(255, 255, 255, 0.1); color: var(--muted); border: 1px solid rgba(255,255,255,0.2); }
-.badge-kyc-1 { background: rgba(0, 148, 217, 0.15); color: #4dc2ff; border: 1px solid rgba(0, 148, 217, 0.35); }
-.badge-kyc-2 { background: rgba(86, 215, 38, 0.15); color: var(--green); border: 1px solid rgba(86, 215, 38, 0.35); }
+.badge-kyc-1 { background: rgba(249, 115, 22, 0.15); color: #F97316; border: 1px solid rgba(249, 115, 22, 0.35); }
+.badge-kyc-2 { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.35); }
 
 /* ── Transactions Ledger Table ── */
 .tx-table {
@@ -927,10 +927,10 @@ input[type="text"]::placeholder {
   text-transform: uppercase;
 }
 
-.tx-recarga { background: rgba(86, 215, 38, 0.15); color: var(--green); }
-.tx-buyin   { background: rgba(0, 148, 217, 0.15); color: #50c4ff; }
-.tx-premio  { background: rgba(204, 245, 0, 0.18); color: var(--yellow); }
-.tx-retiro  { background: rgba(249, 52, 22, 0.15); color: #ff6b6b; }
+.tx-recarga { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+.tx-buyin   { background: rgba(249, 115, 22, 0.15); color: #F97316; }
+.tx-premio  { background: rgba(245, 158, 11, 0.18); color: var(--yellow); }
+.tx-retiro  { background: rgba(239, 68, 68, 0.15); color: #EF4444; }
 .tx-reembolso { background: rgba(255, 255, 255, 0.12); color: var(--text); }
 
 /* ── Payment Methods Selection ── */
@@ -962,8 +962,8 @@ input[type="text"]::placeholder {
 
 .pay-card.active {
   border-color: var(--yellow);
-  background: rgba(204, 245, 0, 0.08);
-  box-shadow: 0 0 12px rgba(204, 245, 0, 0.15);
+  background: rgba(245, 158, 11, 0.08);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
 }
 
 /* ── KYC File Dropzone ── */
@@ -980,7 +980,7 @@ input[type="text"]::placeholder {
 
 .dropzone-kyc:hover {
   border-color: var(--accent);
-  background: rgba(0, 148, 217, 0.05);
+  background: rgba(249, 115, 22, 0.05);
 }
 
 /* ── Responsive ── */
@@ -1025,12 +1025,12 @@ input[type="text"]::placeholder {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #11280d, #1a3a14);
+  background: linear-gradient(135deg, #1E293B, #0F172A);
   border: 1px solid var(--yellow);
   color: #fff;
   padding: 0.65rem 1.15rem;
   border-radius: 50px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(204, 245, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(245, 158, 11, 0.25);
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
   font-weight: 600;
@@ -1041,13 +1041,13 @@ input[type="text"]::placeholder {
 
 #v22-fab:hover {
   transform: translateY(-3px) scale(1.04);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 24px rgba(204, 245, 0, 0.45);
-  background: linear-gradient(135deg, #183e12, #214d1a);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 24px rgba(245, 158, 11, 0.45);
+  background: linear-gradient(135deg, #334155, #1E293B);
 }
 
 @keyframes pulseFab {
-  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 10px rgba(204, 245, 0, 0.2); }
-  50% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(204, 245, 0, 0.45); }
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 10px rgba(245, 158, 11, 0.2); }
+  50% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.45); }
 }
 
 /* ── Drawer & Overlay ── */
@@ -1074,7 +1074,7 @@ input[type="text"]::placeholder {
   width: 100%;
   max-width: 400px;
   height: 100vh;
-  background: #0f240d;
+  background: #0F172A;
   border-left: 1px solid var(--border);
   box-shadow: -10px 0 35px rgba(0, 0, 0, 0.6);
   z-index: 1001;
@@ -1199,9 +1199,9 @@ input[type="text"]::placeholder {
 #v22-checkout-modal {
   width: 100%;
   max-width: 420px;
-  background: #11280d;
-  border: 1px solid rgba(204, 245, 0, 0.3);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 28px rgba(204, 245, 0, 0.15);
+  background: #1E293B;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 28px rgba(245, 158, 11, 0.15);
   border-radius: var(--radius);
   padding: 1.5rem;
   animation: popIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
@@ -1221,7 +1221,7 @@ input[type="text"]::placeholder {
 
 .v22-toast {
   pointer-events: auto;
-  background: rgba(15, 36, 13, 0.95);
+  background: rgba(15, 23, 42, 0.95);
   border: 1px solid var(--border);
   color: #fff;
   padding: 0.75rem 1.15rem;
@@ -1236,9 +1236,9 @@ input[type="text"]::placeholder {
   max-width: 340px;
 }
 
-.v22-toast.success { border-color: rgba(86, 215, 38, 0.5); }
-.v22-toast.warn    { border-color: rgba(204, 245, 0, 0.5); }
-.v22-toast.error   { border-color: rgba(249, 52, 22, 0.5); }
+.v22-toast.success { border-color: rgba(16, 185, 129, 0.5); }
+.v22-toast.warn    { border-color: rgba(245, 158, 11, 0.5); }
+.v22-toast.error   { border-color: rgba(239, 68, 68, 0.5); }
 
 .v22-toast.fade-out {
   opacity: 0;

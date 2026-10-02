@@ -18,6 +18,25 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 header('Content-Type: application/json; charset=utf-8');
 
+// ── Rate Limiting: Máximo 5 intentos por minuto ──────────────────────────────
+$maxAttempts = 5;
+$timeWindow = 60; // segundos
+
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = [];
+}
+
+// Limpiar intentos antiguos
+$_SESSION['login_attempts'] = array_filter($_SESSION['login_attempts'], function($timestamp) use ($timeWindow) {
+    return $timestamp > time() - $timeWindow;
+});
+
+if (count($_SESSION['login_attempts']) >= $maxAttempts) {
+    http_response_code(429);
+    echo json_encode(['ok' => false, 'error' => 'Demasiados intentos. Por favor espera un minuto.']);
+    exit;
+}
+
 // ── Solo POST ────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -68,11 +87,16 @@ if (empty($user['password_hash'])) {
 
 // ── Verificar contraseña ─────────────────────────────────────────────────────
 if (!password_verify($password, $user['password_hash'])) {
+    // Registrar intento fallido
+    $_SESSION['login_attempts'][] = time();
     echo json_encode(['ok' => false, 'error' => 'Credenciales incorrectas.']);
     exit;
 }
 
 // ── Login exitoso ────────────────────────────────────────────────────────────
+// Limpiar intentos fallidos
+$_SESSION['login_attempts'] = [];
+
 session_regenerate_id(true); // Prevenir session fixation
 $_SESSION['usuario_id'] = $user['id'];
 

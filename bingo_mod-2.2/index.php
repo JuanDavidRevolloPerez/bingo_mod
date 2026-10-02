@@ -1,8 +1,9 @@
 <?php
 session_start();
 require_once 'php/funciones.php';
-inicializarSesionUsuario();
+inicializarSesionConBD();
 
+$logueado  = isset($_SESSION['usuario_id']);
 $billetera = $_SESSION['billetera'];
 $usuario   = $_SESSION['usuario'];
 $kyc       = $_SESSION['kyc'];
@@ -12,7 +13,7 @@ $kyc       = $_SESSION['kyc'];
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BINGO ONLINE V2.1 – Multijugador & Payplay</title>
+<title>BANG ONLINE V2.1 – Multijugador & Payplay</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,17 +21,38 @@ $kyc       = $_SESSION['kyc'];
 <!-- Navbar Superior V2.1 -->
 <nav class="app-nav">
   <div class="nav-brand">
-    <div class="logo-sm" style="font-size:1.45rem">BINGO</div>
+    <div class="logo-sm" style="font-size:1.45rem">BANG</div>
     <span class="tagline" style="margin:0;font-size:0.65rem;color:var(--yellow)">V2.1 PAYPLAY</span>
   </div>
   <div class="nav-actions">
+    <?php if (!$logueado): ?>
+    <a href="register.php" class="nav-link-btn" title="Crear una cuenta nueva">
+      <span>📝 Registrarse</span>
+    </a>
+    <a href="login.php" class="nav-link-btn" title="Iniciar sesión" style="border-color:var(--accent);color:var(--accent)">
+      <span>🔑 Ingresar</span>
+    </a>
+    <?php else: ?>
+    <span class="nav-link-btn" title="Sesión iniciada" style="opacity:0.35;cursor:not-allowed;pointer-events:none">
+      <span>📝 Registrarse</span>
+    </span>
+    <span class="nav-link-btn" title="Sesión iniciada" style="opacity:0.35;cursor:not-allowed;pointer-events:none;border-color:var(--accent);color:var(--accent)">
+      <span>🔑 Ingresar</span>
+    </span>
+    <?php endif; ?>
+    <?php if ($logueado): ?>
     <a href="wallet.php" class="chip-saldo" title="Ver mi billetera y recargas">
       <span>🪙 $ <?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?></span>
     </a>
+    <?php else: ?>
+    <span class="chip-saldo" title="Inicia sesión para ver tu billetera" style="opacity:0.35;cursor:not-allowed;pointer-events:none">
+      <span>🪙 Billetera</span>
+    </span>
+    <?php endif; ?>
     <a href="perfil.php" class="nav-link-btn" title="Ver perfil y verificación KYC">
       <span>👤 <?= htmlspecialchars($usuario['nickname'] ?? 'Jugador') ?></span>
       <span class="tx-badge badge-kyc-<?= intval($kyc['nivel'] ?? 1) ?>" style="padding:0.1rem 0.4rem;font-size:0.68rem">
-        KYC <?= intval($kyc['nivel'] ?? 1) ?>
+        KYC <?= intval($kyc['nivel'] ?? 1) >= 2 ? '✓' : '' ?>
       </span>
     </a>
   </div>
@@ -40,7 +62,7 @@ $kyc       = $_SESSION['kyc'];
   <div style="width:100%;max-width:480px">
 
     <div style="text-align:center;margin-bottom:1.5rem">
-      <div class="logo">BINGO</div>
+      <div class="logo">BANG</div>
       <p class="tagline">Multijugador Transaccional en Tiempo Real</p>
     </div>
 
@@ -52,6 +74,11 @@ $kyc       = $_SESSION['kyc'];
       <button type="button" class="mode-btn" id="btn-modo-payplay" onclick="cambiarModoPlataforma('payplay')">
         <span>💰</span> Modo Payplay (Fichas)
       </button>
+    </div>
+
+    <!-- Aviso para modo Payplay sin sesión iniciada -->
+    <div id="aviso-payplay-login" class="err-msg" style="display:none;margin-top:0.75rem;text-align:center">
+      ⚠️ Para jugar en modo Payplay debes iniciar sesión. <a href="login.php" style="color:var(--yellow)">Inicia sesión aquí</a> o <a href="register.php" style="color:var(--yellow)">regístrate</a>.
     </div>
 
     <div class="card">
@@ -71,14 +98,20 @@ $kyc       = $_SESSION['kyc'];
         <!-- Opciones Exclusivas Modo Payplay -->
         <div id="box-payplay-opciones" style="display:none;margin-top:1rem;background:rgba(204,245,0,0.04);border:1px solid rgba(204,245,0,0.2);border-radius:12px;padding:0.85rem">
           <div class="buyin-label">
-            <span style="font-weight:600;color:var(--yellow)">Selecciona el Buy-in (Costo de entrada)</span>
-            <span id="label-saldo-check" style="font-size:0.75rem;color:var(--muted)">Saldo: $<?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?></span>
+            <span style="font-weight:600;color:var(--yellow)">Selecciona el Buy-in (de 1 a 10 fichas)</span>
+            <span id="label-saldo-check" style="font-size:0.75rem;color:var(--muted)">Saldo: <?= intval($billetera['saldo_disponible']) ?> fichas</span>
           </div>
           <div class="buyin-grid">
-            <div class="buyin-chip selected" onclick="selBuyIn(this, 1000)">$1.000</div>
-            <div class="buyin-chip" onclick="selBuyIn(this, 5000)">$5.000</div>
-            <div class="buyin-chip" onclick="selBuyIn(this, 10000)">$10.000</div>
-            <div class="buyin-chip" onclick="selBuyIn(this, 50000)">$50.000</div>
+            <div class="buyin-chip selected" onclick="selBuyIn(this, 1)">1 ficha</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 2)">2</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 3)">3</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 4)">4</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 5)">5</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 6)">6</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 7)">7</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 8)">8</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 9)">9</div>
+            <div class="buyin-chip" onclick="selBuyIn(this, 10)">10</div>
           </div>
           <div style="font-size:0.75rem;color:var(--muted);display:flex;justify-content:space-between">
             <span>🛡️ Retención Escrow protegida</span>
@@ -100,7 +133,7 @@ $kyc       = $_SESSION['kyc'];
         <label class="form-label">Código de sala</label>
         <input type="text" id="u-codigo" placeholder="A7X3" maxlength="4"
                style="text-transform:uppercase;letter-spacing:0.22em;font-size:1.4rem;text-align:center">
-        
+
         <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;text-align:center">
           Si la sala es Payplay, el Buy-in se retendrá automáticamente de tu billetera al ingresar.
         </p>
@@ -120,15 +153,25 @@ $kyc       = $_SESSION['kyc'];
 
 <script>
 let modoActual = 'free';
-let buyInSeleccionado = 1000;
+let buyInSeleccionado = 1;
 const saldoDisponible = <?= floatval($billetera['saldo_disponible']) ?>;
+const logueado = <?= $logueado ? 'true' : 'false' ?>;
 
 function cambiarModoPlataforma(m) {
-  modoActual = m;
   const btnFree = document.getElementById('btn-modo-free');
   const btnPay  = document.getElementById('btn-modo-payplay');
   const boxPay  = document.getElementById('box-payplay-opciones');
   const btnSubmit = document.getElementById('btn-crear-submit');
+  const aviso = document.getElementById('aviso-payplay-login');
+
+  // Bloquear modo Payplay si no hay sesión iniciada
+  if (m === 'payplay' && !logueado) {
+    aviso.style.display = 'block';
+    return; // No cambiar de modo: se mantiene "free"
+  }
+  aviso.style.display = 'none';
+
+  modoActual = m;
 
   if (m === 'payplay') {
     btnPay.classList.add('active', 'payplay-active');
@@ -136,7 +179,7 @@ function cambiarModoPlataforma(m) {
     boxPay.style.display = 'block';
     btnSubmit.style.background = 'linear-gradient(135deg, var(--yellow), #9ec200)';
     btnSubmit.style.color = '#11280d';
-    btnSubmit.textContent = `Crear sala Payplay ($${buyInSeleccionado.toLocaleString()}) →`;
+    btnSubmit.textContent = `Crear sala Payplay (${buyInSeleccionado} ficha${buyInSeleccionado > 1 ? 's' : ''}) →`;
   } else {
     btnFree.classList.add('active');
     btnPay.classList.remove('active', 'payplay-active');
@@ -152,7 +195,7 @@ function selBuyIn(el, v) {
   el.classList.add('selected');
   buyInSeleccionado = v;
   const btnSubmit = document.getElementById('btn-crear-submit');
-  btnSubmit.textContent = `Crear sala Payplay ($${buyInSeleccionado.toLocaleString()}) →`;
+  btnSubmit.textContent = `Crear sala Payplay (${buyInSeleccionado} ficha${buyInSeleccionado > 1 ? 's' : ''}) →`;
 }
 
 function tab(t) {
@@ -170,7 +213,7 @@ async function crearSala() {
   if (!nombre || !sala) { mostrarError(err,'Completa todos los campos'); return; }
 
   if (modoActual === 'payplay' && saldoDisponible < buyInSeleccionado) {
-    mostrarError(err, `Saldo insuficiente ($${saldoDisponible.toLocaleString()}). Recarga tu billetera para este Buy-in.`);
+    mostrarError(err, `Saldo insuficiente (${saldoDisponible} fichas). Recarga tu billetera para este Buy-in.`);
     return;
   }
 
@@ -195,7 +238,7 @@ async function crearSala() {
     } else {
       mostrarError(err, d.error);
       btn.disabled = false;
-      btn.textContent = modoActual === 'payplay' ? `Crear sala Payplay ($${buyInSeleccionado.toLocaleString()}) →` : 'Crear sala →';
+      btn.textContent = modoActual === 'payplay' ? `Crear sala Payplay (${buyInSeleccionado} ficha${buyInSeleccionado > 1 ? 's' : ''}) →` : 'Crear sala →';
     }
   } catch(e) {
     btn.disabled = false;

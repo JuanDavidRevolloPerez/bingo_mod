@@ -20,7 +20,7 @@ if (count($sala['jugadores']) < 1)   jsonError('Necesitas al menos un jugador');
 // Consolidación de Fondos Payplay (Fase 2 de Escrow)
 if (($sala['tipo_sala'] ?? 'free') === 'payplay') {
     $numJugadores = count($sala['jugadores']);
-    $buyIn        = floatval($sala['buy_in'] ?? 0);
+    $buyIn        = intval($sala['buy_in'] ?? 0);
     $sala['pozo_total'] = $numJugadores * $buyIn;
     $sala['estado_financiero'] = 'COBRADA';
 }
@@ -44,8 +44,28 @@ $intervalo = in_array((int)($body['velocidad'] ?? 10), [5, 10, 15]) ? (int)$body
 $sala['estado']           = 'jugando';
 $sala['intervalo_fichas'] = $intervalo;
 $sala['proxima_ficha_at'] = time() + $intervalo;
+$sala['iniciado_at']      = time();
 
 guardarSala($sala);
+
+// ── Sincronizar con BD ─────────────────────────────────────────────────────────
+if (isset($_SESSION['usuario_id'])) {
+    $usuarioId = (int)$_SESSION['usuario_id'];
+    actualizarSalaBD($sala);
+    
+    // Guardar cartones en BD
+    $salaId = obtenerSalaIdPorCodigo($codigo);
+    if ($salaId) {
+        foreach ($sala['jugadores'] as $index => $jugador) {
+            $jugadorSalaId = obtenerJugadorSalaId($salaId, $usuarioId);
+            if ($jugadorSalaId && isset($sala['cartones'][$jugador['id']])) {
+                $carton = $sala['cartones'][$jugador['id']];
+                guardarCartonBD($jugadorSalaId, 1, $carton['grid'], $carton['marcadas']);
+            }
+        }
+    }
+}
+
 jsonOk([
     'pozo_total' => $sala['pozo_total'] ?? 0,
     'tipo_sala'  => $sala['tipo_sala'] ?? 'free'

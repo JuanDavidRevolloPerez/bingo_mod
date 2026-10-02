@@ -1,19 +1,30 @@
 <?php
 session_start();
 require_once 'php/funciones.php';
-inicializarSesionUsuario();
+inicializarSesionConBD();
 
 $usuario   = $_SESSION['usuario'];
 $kyc       = $_SESSION['kyc'];
 $billetera = $_SESSION['billetera'];
 $nivel     = intval($kyc['nivel'] ?? 0);
+
+// Verificar si es admin (para panel V2.2)
+$esAdmin = false;
+if (isset($_SESSION['usuario_id'])) {
+    require_once __DIR__ . '/database/db.php';
+    global $pdo;
+    $stmt = $pdo->prepare('SELECT rol FROM usuarios WHERE id = ?');
+    $stmt->execute([$_SESSION['usuario_id']]);
+    $userData = $stmt->fetch();
+    $esAdmin = ($userData && $userData['rol'] === 'ADMIN');
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Perfil y Verificación KYC – BINGO V2.1</title>
+<title>Perfil y Verificación KYC – BANG V2.1</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,7 +32,7 @@ $nivel     = intval($kyc['nivel'] ?? 0);
 <!-- Navbar -->
 <nav class="app-nav">
   <a href="index.php" class="nav-brand">
-    <div class="logo-sm" style="font-size:1.5rem">BINGO</div>
+    <div class="logo-sm" style="font-size:1.5rem">BANG</div>
     <span class="tagline" style="margin:0;font-size:0.65rem;color:var(--yellow)">V2.1 PAYPLAY</span>
   </a>
   <div class="nav-actions">
@@ -45,7 +56,7 @@ $nivel     = intval($kyc['nivel'] ?? 0);
       <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">
         <h1 style="font-size:1.4rem;font-weight:600"><?= htmlspecialchars($usuario['nickname']) ?></h1>
         <span class="tx-badge badge-kyc-<?= $nivel ?>">
-          KYC NIVEL <?= $nivel ?>: <?= $nivel === 2 ? 'FINANCIERO' : ($nivel === 1 ? 'IDENTIDAD' : 'BÁSICO') ?>
+          KYC: <?= $nivel >= 2 ? 'VERIFICADO' : ($nivel === 1 ? 'IDENTIDAD' : 'BÁSICO') ?>
         </span>
       </div>
       <div style="font-size:0.85rem;color:var(--muted);margin-top:0.25rem">
@@ -55,44 +66,15 @@ $nivel     = intval($kyc['nivel'] ?? 0);
     <a href="wallet.php" class="btn btn-green" style="font-size:0.82rem;padding:0.45rem 0.9rem">
       Billetera →
     </a>
-  </div>
-
-  <!-- Explicación de Niveles KYC -->
-  <div style="margin-bottom:1.25rem">
-    <div class="section-label">Estado de Cumplimiento (KYC)</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:0.75rem">
-      
-      <div class="card-sm" style="border-color:<?= $nivel >= 0 ? 'var(--border)' : 'transparent' ?>">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
-          <span style="font-weight:600;font-size:0.85rem">Nivel 0: Básico</span>
-          <span style="color:var(--green)">✓</span>
-        </div>
-        <p style="font-size:0.75rem;color:var(--muted)">Acceso exclusivo a salas de juego gratuitas.</p>
-      </div>
-
-      <div class="card-sm" style="border-color:<?= $nivel >= 1 ? 'rgba(0,148,217,0.4)' : 'transparent' ?>">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
-          <span style="font-weight:600;font-size:0.85rem;color:#4dc2ff">Nivel 1: Identidad</span>
-          <span style="color:<?= $nivel >= 1 ? 'var(--green)' : 'var(--muted)' ?>"><?= $nivel >= 1 ? '✓' : '○' ?></span>
-        </div>
-        <p style="font-size:0.75rem;color:var(--muted)">Recargas en línea y participación en salas Payplay.</p>
-      </div>
-
-      <div class="card-sm" style="border-color:<?= $nivel >= 2 ? 'rgba(86,215,38,0.4)' : 'transparent' ?>">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
-          <span style="font-weight:600;font-size:0.85rem;color:var(--green)">Nivel 2: Financiero</span>
-          <span style="color:<?= $nivel >= 2 ? 'var(--green)' : 'var(--muted)' ?>"><?= $nivel >= 2 ? '✓' : '○' ?></span>
-        </div>
-        <p style="font-size:0.75rem;color:var(--muted)">Retiro de ganancias a cuentas bancarias CO.</p>
-      </div>
-
-    </div>
+    <a href="php/auth/logout.php" class="btn" style="font-size:0.82rem;padding:0.45rem 0.9rem;border:1px solid #ff8585;color:#ff8585;text-decoration:none">
+      🚪 Cerrar sesión
+    </a>
   </div>
 
   <!-- Formulario KYC Nivel 1: OTP Email -->
   <div class="card" style="margin-bottom:1.5rem">
     <div class="section-label" style="color:#4dc2ff">
-      <span>📧</span> Verificación Nivel 1: Validación OTP
+      <span>📧</span> Validación OTP por Correo
     </div>
 
     <?php if ($nivel >= 1): ?>
@@ -120,10 +102,10 @@ $nivel     = intval($kyc['nivel'] ?? 0);
     <?php endif; ?>
   </div>
 
-  <!-- Formulario KYC Nivel 2: Documental -->
+  <!-- Formulario de verificación documental -->
   <div class="card">
     <div class="section-label" style="color:var(--green)">
-      <span>🪪</span> Verificación Nivel 2: Documento de Identidad y Banco
+      <span>🪪</span> Verificación de Documento de Identidad
     </div>
 
     <?php if ($nivel >= 2): ?>
@@ -144,7 +126,6 @@ $nivel     = intval($kyc['nivel'] ?? 0);
           <select id="kyc-tipo-doc" style="width:100%;background:#1a3a14;border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;padding:0.6rem;font-size:0.85rem">
             <option value="CC">C.C. (Cédula)</option>
             <option value="CE">C.E. (Extranjería)</option>
-            <option value="NIT">NIT</option>
           </select>
         </div>
         <div>
@@ -258,7 +239,7 @@ async function subirKyc() {
     msg.textContent = `✓ ${d.mensaje}`;
     msg.style.display = 'block';
     msg.style.color = 'var(--green)';
-    setTimeout(() => location.reload(), 1500);
+    setTimeout(() => { location.href = 'wallet.php'; }, 1500);
   } else {
     msg.textContent = d.error;
     msg.style.display = 'block';
@@ -267,6 +248,9 @@ async function subirKyc() {
     btn.textContent = 'Enviar Documento para Aprobación →';
   }
 }
+</script>
+<script>
+  window.__ES_ADMIN__ = <?= $esAdmin ? 'true' : 'false' ?>;
 </script>
 <script src="js/panel_v22.js"></script>
 </body>

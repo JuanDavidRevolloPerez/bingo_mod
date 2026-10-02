@@ -14,7 +14,18 @@ $codigo = strtoupper(trim($body['codigo'] ?? ''));
 $sala = cargarSala($codigo);
 if (!$sala)                           jsonError('Sala no encontrada');
 if ($sala['estado'] !== 'jugando')    jsonError('La partida no está activa');
-if (!isset($sala['cartones'][$miId])) jsonError('No estás registrado en esta partida');
+
+// Validar que el jugador esté registrado en la sala
+$jugadorRegistrado = false;
+foreach ($sala['jugadores'] as $jugador) {
+    if ($jugador['id'] === $miId) {
+        $jugadorRegistrado = true;
+        break;
+    }
+}
+if (!$jugadorRegistrado) jsonError('No estás registrado en esta partida');
+
+if (!isset($sala['cartones'][$miId])) jsonError('No tienes un cartón asignado');
 
 $carton   = $sala['cartones'][$miId];
 $marcadas = $carton['marcadas'];
@@ -54,9 +65,27 @@ if (($sala['tipo_sala'] ?? 'free') === 'payplay') {
     $sala['estado_financiero'] = 'REPARTIDA';
     
     acreditarPremioGanador($premioNeto, $codigo);
+    
+    // Sincronizar premio con BD
+    if (isset($_SESSION['usuario_id'])) {
+        $usuarioId = (int)$_SESSION['usuario_id'];
+        acreditarPremioGanadorBD($usuarioId, $premioNeto, $codigo);
+        
+        // Registrar ganador en BD
+        $salaId = obtenerSalaIdPorCodigo($codigo);
+        if ($salaId) {
+            $jugadorSalaId = obtenerJugadorSalaId($salaId, $usuarioId);
+            registrarGanadorBD($salaId, $usuarioId, $jugadorSalaId, $premioNeto);
+        }
+    }
 }
 
 guardarSala($sala);
+
+// Actualizar estado en BD
+if (isset($_SESSION['usuario_id'])) {
+    actualizarSalaBD($sala);
+}
 
 jsonOk([
     'ganador'        => true,

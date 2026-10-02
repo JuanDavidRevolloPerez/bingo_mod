@@ -14,7 +14,8 @@
 
 declare(strict_types=1);
 
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../../php/funciones.php';
+require_once __DIR__ . '/../../database/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -37,6 +38,10 @@ if (!is_array($body)) {
 $nickname = trim($body['nickname'] ?? '');
 $email    = strtolower(trim($body['email']    ?? ''));
 $password = $body['password'] ?? '';
+$tipoDocumento = strtoupper(trim($body['tipo_documento'] ?? ''));
+$numeroDocumento = trim($body['numero_documento'] ?? '');
+$telefono = trim($body['telefono'] ?? '');
+$fechaNacimiento = trim($body['fecha_nacimiento'] ?? '');
 
 // ── Validaciones del servidor ─────────────────────────────────────────────────
 $errors = [];
@@ -53,14 +58,41 @@ if (strlen($password) < 8 || !preg_match('/[a-zA-Z]/', $password) || !preg_match
     $errors[] = 'La contraseña debe tener mínimo 8 caracteres, incluir letras y números.';
 }
 
+if (!in_array($tipoDocumento, ['CC', 'CE'])) {
+    $errors[] = 'Tipo de documento inválido. Solo se aceptan CC o CE.';
+}
+
+if (empty($numeroDocumento) || strlen($numeroDocumento) > 20) {
+    $errors[] = 'El número de documento es requerido (máximo 20 caracteres).';
+}
+
+if (empty($telefono) || !preg_match('/^[0-9]{7,15}$/', $telefono)) {
+    $errors[] = 'Ingresa un número de teléfono válido.';
+}
+
+if (empty($fechaNacimiento)) {
+    $errors[] = 'La fecha de nacimiento es requerida.';
+} else {
+    $fechaNac = DateTime::createFromFormat('Y-m-d', $fechaNacimiento);
+    if (!$fechaNac || $fechaNac->format('Y-m-d') !== $fechaNacimiento) {
+        $errors[] = 'Fecha de nacimiento inválida.';
+    } else {
+        $hoy = new DateTime();
+        $edad = $hoy->diff($fechaNac)->y;
+        if ($edad < 18) {
+            $errors[] = 'Debes ser mayor de edad (18+) para registrarte.';
+        }
+        if ($edad > 120) {
+            $errors[] = 'Fecha de nacimiento no válida.';
+        }
+    }
+}
+
 if (!empty($errors)) {
     http_response_code(422);
     echo json_encode(['ok' => false, 'error' => implode(' ', $errors)]);
     exit;
 }
-
-// ── Conexión a la BD ─────────────────────────────────────────────────────────
-require_once __DIR__ . '/../../database/db.php';   // define $pdo
 
 // ── Verificar duplicados ─────────────────────────────────────────────────────
 $stmtCheck = $pdo->prepare(
@@ -70,7 +102,6 @@ $stmtCheck->execute([$email, $nickname]);
 $existente = $stmtCheck->fetch();
 
 if ($existente) {
-    // Detectar cuál duplicado es para dar un mensaje preciso
     $stmtEmail = $pdo->prepare('SELECT id FROM usuarios WHERE email = ? LIMIT 1');
     $stmtEmail->execute([$email]);
     if ($stmtEmail->fetch()) {
@@ -81,38 +112,29 @@ if ($existente) {
     exit;
 }
 
-// ── Crear usuario ─────────────────────────────────────────────────────────────
+// ── Verificar número de documento duplicado ──────────────────────────────────
+$stmtDoc = $pdo->prepare('SELECT id FROM verificaciones_kyc WHERE documento_num = ? LIMIT 1');
+$stmtDoc->execute([$numeroDocumento]);
+if ($stmtDoc->fetch()) {
+    echo json_encode(['ok' => false, 'error' => 'Ese número de documento ya está registrado.']);
+    exit;
+}
+
+// ── Crear usuario usando función centralizada ─────────────────────────────────
 $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
 
 try {
-    $pdo->beginTransaction();
-
-    // 1. Insertar usuario
-    $stmtUser = $pdo->prepare(
-        'INSERT INTO usuarios (nickname, email, password_hash, nivel_verificacion, rol, estado)
-         VALUES (?, ?, ?, 0, \'JUGADOR\', \'ACTIVO\')'
+    $nuevoId = crearUsuarioCompleto(
+        $nickname, 
+        $email, 
+        $passwordHash, 
+        null,
+        $tipoDocumento,
+        $numeroDocumento,
+        $telefono,
+        $fechaNacimiento
     );
-    $stmtUser->execute([$nickname, $email, $passwordHash]);
-    $nuevoId = (int) $pdo->lastInsertId();
-
-    // 2. Crear billetera vacía automáticamente
-    $stmtBill = $pdo->prepare(
-        'INSERT INTO billeteras (usuario_id, saldo_disponible, saldo_retenido)
-         VALUES (?, 0.00, 0.00)'
-    );
-    $stmtBill->execute([$nuevoId]);
-
-    // 3. Crear registro KYC pendiente
-    $stmtKyc = $pdo->prepare(
-        'INSERT INTO verificaciones_kyc (usuario_id, estado)
-         VALUES (?, \'PENDIENTE\')'
-    );
-    $stmtKyc->execute([$nuevoId]);
-
-    $pdo->commit();
-
 } catch (\PDOException $e) {
-    $pdo->rollBack();
     error_log('[REGISTRO] Error BD: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => 'Error interno. Por favor intenta más tarde.']);
@@ -122,7 +144,7 @@ try {
 // ── Respuesta exitosa ─────────────────────────────────────────────────────────
 echo json_encode([
     'ok'      => true,
-    'mensaje' => '¡Cuenta creada exitosamente! Bienvenido a Bingo Online.',
+    'mensaje' => '¡Cuenta creada exitosamente! Bienvenido a BANG ONLINE.',
     'usuario' => ['id' => $nuevoId, 'nickname' => $nickname]
 ]);
 exit;

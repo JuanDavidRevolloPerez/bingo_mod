@@ -1,18 +1,35 @@
 <?php
 session_start();
 require_once 'php/funciones.php';
-inicializarSesionUsuario();
+inicializarSesionConBD();
+
+// Billetera solo accesible con sesión iniciada
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: login.php');
+    exit;
+}
 
 $billetera = $_SESSION['billetera'];
 $usuario   = $_SESSION['usuario'];
 $kyc       = $_SESSION['kyc'];
+
+// Verificar si es admin (para panel V2.2)
+$esAdmin = false;
+if (isset($_SESSION['usuario_id'])) {
+    require_once __DIR__ . '/database/db.php';
+    global $pdo;
+    $stmt = $pdo->prepare('SELECT rol FROM usuarios WHERE id = ?');
+    $stmt->execute([$_SESSION['usuario_id']]);
+    $userData = $stmt->fetch();
+    $esAdmin = ($userData && $userData['rol'] === 'ADMIN');
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mi Billetera – BINGO V2.1</title>
+<title>Mi Billetera – BANG V2.2</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,13 +37,13 @@ $kyc       = $_SESSION['kyc'];
 <!-- Navbar -->
 <nav class="app-nav">
   <a href="index.php" class="nav-brand">
-    <div class="logo-sm" style="font-size:1.5rem">BINGO</div>
-    <span class="tagline" style="margin:0;font-size:0.65rem;color:var(--yellow)">V2.1 PAYPLAY</span>
+    <div class="logo-sm" style="font-size:1.5rem">BANG</div>
+    <span class="tagline" style="margin:0;font-size:0.65rem;color:var(--yellow)">V2.2 PAYPLAY</span>
   </a>
   <div class="nav-actions">
     <a href="perfil.php" class="nav-link-btn">
       <span>👤 <?= htmlspecialchars($usuario['nickname']) ?></span>
-      <span class="tx-badge badge-kyc-<?= intval($kyc['nivel']) ?>">KYC <?= intval($kyc['nivel']) ?></span>
+      <span class="tx-badge badge-kyc-<?= intval($kyc['nivel']) ?>">KYC <?= intval($kyc['nivel']) >= 2 ? '✓' : '' ?></span>
     </a>
     <a href="index.php" class="nav-link-btn" style="border-color:var(--accent);color:var(--accent)">
       🎮 Volver al Lobby
@@ -52,17 +69,17 @@ $kyc       = $_SESSION['kyc'];
     <div class="balance-card highlight">
       <div class="section-label" style="color:var(--yellow)">Saldo Disponible</div>
       <div class="balance-num" id="disp-saldo-disp">
-        $ <?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?>
+        🪙 <?= $billetera['saldo_disponible'] ?> fichas
       </div>
       <div style="font-size:0.8rem;color:var(--muted)">
-        Equivalente a <?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?> Fichas para jugar
+        Equivalente a $<?= number_format($billetera['saldo_disponible'] * VALOR_FICHA, 0, ',', '.') ?> COP
       </div>
     </div>
 
     <div class="balance-card escrow">
       <div class="section-label" style="color:#4dc2ff">Saldo en Retención (Escrow)</div>
       <div class="balance-num" id="disp-saldo-ret" style="color:#80d4ff">
-        $ <?= number_format($billetera['saldo_retenido'], 0, ',', '.') ?>
+        🪙 <?= $billetera['saldo_retenido'] ?> fichas
       </div>
       <div style="font-size:0.8rem;color:var(--muted)">
         Fondos temporales en salas de espera activas
@@ -76,45 +93,28 @@ $kyc       = $_SESSION['kyc'];
     <!-- Módulo Recarga -->
     <div class="card" id="sec-recarga">
       <div class="section-label" style="color:var(--green)">
-        <span>💳</span> Recargar Fichas (Pasarela Colombia)
+        <span>💳</span> Recargar Fichas (Wompi)
       </div>
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">
-        Acreditación automática e inmediata vía Wompi / ePayco.
+        Acreditación automática e inmediata vía Wompi. Sin tarjeta de crédito.
       </p>
 
       <label class="form-label">Monto a recargar (COP)</label>
-      <input type="number" id="rec-monto" placeholder="Ej. 20000" min="1000" step="1000" value="10000"
+      <input type="number" id="rec-monto" placeholder="Ej. 50000" min="10000" step="10000" value="50000"
              style="font-size:1.1rem;font-weight:600">
+      <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem">
+        1 Ficha = $<?= number_format(VALOR_FICHA, 0, ',', '.') ?> COP
+      </p>
 
       <div style="display:flex;gap:0.4rem;margin-bottom:1rem;flex-wrap:wrap">
-        <button type="button" class="buyin-chip" onclick="setMontoRecarga(5000)">$5K</button>
-        <button type="button" class="buyin-chip" onclick="setMontoRecarga(10000)">$10K</button>
-        <button type="button" class="buyin-chip" onclick="setMontoRecarga(25000)">$25K</button>
-        <button type="button" class="buyin-chip" onclick="setMontoRecarga(50000)">$50K</button>
+        <button type="button" class="buyin-chip" onclick="setMontoRecarga(10000)">1 ficha</button>
+        <button type="button" class="buyin-chip" onclick="setMontoRecarga(50000)">5 fichas</button>
+        <button type="button" class="buyin-chip" onclick="setMontoRecarga(100000)">10 fichas</button>
+        <button type="button" class="buyin-chip" onclick="setMontoRecarga(200000)">20 fichas</button>
       </div>
 
-      <label class="form-label">Medio de Pago</label>
-      <div class="pay-methods-grid">
-        <div class="pay-card active" onclick="selMetodo(this, 'PSE')">
-          <span style="font-size:1.2rem">🏦</span>
-          <span style="font-size:0.75rem;font-weight:600">PSE</span>
-        </div>
-        <div class="pay-card" onclick="selMetodo(this, 'Nequi')">
-          <span style="font-size:1.2rem">📱</span>
-          <span style="font-size:0.75rem;font-weight:600">Nequi</span>
-        </div>
-        <div class="pay-card" onclick="selMetodo(this, 'Daviplata')">
-          <span style="font-size:1.2rem">📲</span>
-          <span style="font-size:0.75rem;font-weight:600">Daviplata</span>
-        </div>
-        <div class="pay-card" onclick="selMetodo(this, 'Tarjeta Crédito/Débito')">
-          <span style="font-size:1.2rem">💳</span>
-          <span style="font-size:0.75rem;font-weight:600">Tarjeta</span>
-        </div>
-      </div>
-
-      <button class="btn btn-green" id="btn-recargar" onclick="procesarRecarga()">
-        Pagar con Checkout Seguro →
+      <button class="btn btn-green" id="btn-recargar" onclick="irAWompi()">
+        Ir al Checkout de Pago →
       </button>
       <div class="err-msg" id="msg-recarga"></div>
     </div>
@@ -128,9 +128,9 @@ $kyc       = $_SESSION['kyc'];
       <?php if (intval($kyc['nivel']) < 2): ?>
         <div style="background:rgba(249,52,22,0.1);border:1px solid rgba(249,52,22,0.3);border-radius:12px;padding:1rem;margin-bottom:1rem;text-align:center">
           <div style="font-size:1.8rem;margin-bottom:0.3rem">🔒</div>
-          <div style="font-size:0.92rem;font-weight:600;color:#ff8585;margin-bottom:0.3rem">Retiros Bloqueados (Requiere KYC 2)</div>
+          <div style="font-size:0.92rem;font-weight:600;color:#ff8585;margin-bottom:0.3rem">Retiros Bloqueados (Requiere Verificación)</div>
           <p style="font-size:0.8rem;color:var(--muted);line-height:1.4;margin-bottom:0.75rem">
-            Por regulación financiera y prevención de fraude, debes subir tu documento de identidad y certificación bancaria.
+            Por regulación financiera y prevención de fraude, debes subir tu documento de identidad.
           </p>
           <a href="perfil.php" class="btn btn-blue" style="font-size:0.82rem;padding:0.45rem 1rem">
             Verificar Identidad en Perfil →
@@ -141,8 +141,11 @@ $kyc       = $_SESSION['kyc'];
           Los retiros se abonan directamente a tu cuenta bancaria en Colombia.
         </p>
 
-        <label class="form-label">Monto a retirar (Fichas / COP)</label>
-        <input type="number" id="ret-monto" placeholder="Ej. 20000" min="5000" step="1000">
+        <label class="form-label">Cantidad de fichas a retirar</label>
+        <input type="number" id="ret-monto" placeholder="Ej. 5" min="1" step="1" max="<?= intval($billetera['saldo_disponible']) ?>">
+        <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem">
+          Disponible para retirar: <?= intval($billetera['saldo_disponible']) ?> fichas · 1 Ficha = $<?= number_format(VALOR_FICHA, 0, ',', '.') ?> COP
+        </p>
 
         <label class="form-label">Banco de Destino</label>
         <select id="ret-banco" style="width:100%;background:#1a3a14;border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;padding:0.6rem 0.8rem;font-size:0.88rem;margin-bottom:0.75rem">
@@ -223,16 +226,8 @@ $kyc       = $_SESSION['kyc'];
 </div>
 
 <script>
-let metodoSeleccionado = 'PSE';
-
 function setMontoRecarga(v) {
   document.getElementById('rec-monto').value = v;
-}
-
-function selMetodo(el, m) {
-  document.querySelectorAll('.pay-card').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  metodoSeleccionado = m;
 }
 
 function scrollSeccion(id) {
@@ -240,45 +235,16 @@ function scrollSeccion(id) {
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
-async function procesarRecarga() {
-  const monto = parseFloat(document.getElementById('rec-monto').value) || 0;
-  const msg   = document.getElementById('msg-recarga');
-  msg.style.display = 'none';
-
-  if (monto < 1000) {
-    msg.textContent = 'El monto mínimo de recarga es de $1.000';
+function irAWompi() {
+  const monto = parseFloat(document.getElementById('rec-monto').value) || 50000;
+  if (monto < 10000) {
+    const msg = document.getElementById('msg-recarga');
+    msg.textContent = 'El monto mínimo de recarga es de $10.000 COP (1 ficha)';
     msg.style.display = 'block';
     msg.style.color = '#ff6b6b';
     return;
   }
-
-  const btn = document.getElementById('btn-recargar');
-  btn.disabled = true;
-  btn.textContent = 'Conectando con Pasarela...';
-
-  try {
-    const r = await fetch('php/billetera_acciones.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accion: 'recargar', monto, metodo: metodoSeleccionado })
-    });
-    const d = await r.json();
-    if (d.ok) {
-      msg.textContent = `✓ ${d.mensaje} Ref: ${d.referencia}`;
-      msg.style.display = 'block';
-      msg.style.color = 'var(--green)';
-      setTimeout(() => location.reload(), 1200);
-    } else {
-      msg.textContent = d.error;
-      msg.style.display = 'block';
-      msg.style.color = '#ff6b6b';
-      btn.disabled = false;
-      btn.textContent = 'Pagar con Checkout Seguro →';
-    }
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = 'Pagar con Checkout Seguro →';
-  }
+  window.location.href = 'php/wompi_simulado.php?monto=' + monto;
 }
 
 async function procesarRetiro() {
@@ -324,6 +290,9 @@ async function procesarRetiro() {
     btn.textContent = 'Enviar Solicitud de Retiro →';
   }
 }
+</script>
+<script>
+  window.__ES_ADMIN__ = <?= $esAdmin ? 'true' : 'false' ?>;
 </script>
 <script src="js/panel_v22.js"></script>
 </body>
