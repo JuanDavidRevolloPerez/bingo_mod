@@ -65,7 +65,7 @@ $sala = [
     'historial'         => [],
     'cartones'          => [],
     'proxima_ficha_at'  => null,
-    'intervalo_fichas'  => null,
+    'intervalo_fichas'  => 10,
     'ganador_id'        => null,
     'ganador_nombre'    => null,
     'premio_ganado'     => null,
@@ -73,10 +73,9 @@ $sala = [
     'finalizado_at'     => null,
 ];
 
-guardarSala($sala);
-
 // ── Sincronizar con BD ─────────────────────────────────────────────────────────
-// Si el usuario está logueado, guardar en BD
+// El JSON de la sala se escribe SOLO si la BD tuvo éxito (ver más abajo),
+// para no dejar salas huérfanas en data/ cuando el INSERT falla.
 if (isset($_SESSION['usuario_id'])) {
     $usuarioId = (int)$_SESSION['usuario_id'];
     try {
@@ -100,9 +99,19 @@ if (isset($_SESSION['usuario_id'])) {
             agregarJugadorSalaBD($salaId, $usuarioId, $buyIn, 1);
         }
     } catch (\PDOException $e) {
-        error_log('[CREAR_SALA] Error BD: ' . $e->getMessage() . ' | Code: ' . $e->getCode() . ' | SQLState: ' . $e->getSQLState() . ' | HostID_BD: ' . ($hostIdBD ?? 'null') . ' | UsuarioID: ' . ($usuarioId ?? 'null'));
-        jsonError('Error BD: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
+        // Nota: getSQLState() NO existe en PDOException. El SQLSTATE real
+        // está en $e->errorInfo[0]. Usamos eso para no romper el catch.
+        $sqlState = $e->errorInfo[0] ?? 'N/A';
+        error_log('[CREAR_SALA] Error BD: ' . $e->getMessage() . ' | Code: ' . $e->getCode() . ' | SQLState: ' . $sqlState . ' | HostID_BD: ' . ($hostIdBD ?? 'null') . ' | UsuarioID: ' . ($usuarioId ?? 'null'));
+        // Revertir la retención de sesión si había sido hecha (evita fugas de saldo)
+        if ($tipoSala === 'payplay') {
+            reembolsarSaldoEscrow($buyIn, $codigo);
+        }
+        jsonError('Error al crear la sala en la base de datos. Intenta de nuevo.');
     }
 }
+
+// Solo ahora, con la BD confirmada, persistimos la sala en JSON (data/)
+guardarSala($sala);
 
 jsonOk(['codigo' => $codigo, 'tipo_sala' => $tipoSala, 'buy_in' => $buyIn]);

@@ -362,7 +362,9 @@ function guardarSalaBD(array $sala): void {
         $sala['estado'],
         $hostIdBD,
         $sala['modo'] ?? 'normal',
-        $sala['intervalo_fichas'] ?? null
+        // intervalo_fichas es NOT NULL en BD (default 10). Usar 10 si viene null/invalido
+        // para evitar ERROR 1048 "Column 'intervalo_fichas' cannot be null".
+        $sala['intervalo_fichas'] ?? 10
     ]);
 }
 
@@ -406,7 +408,8 @@ function actualizarSalaBD(array $sala): void {
         $sala['estado'],
         $sala['pozo_total'] ?? 0,
         $sala['modo'] ?? 'normal',
-        $sala['intervalo_fichas'] ?? null,
+        // Mismo guard que guardarSalaBD: la columna es NOT NULL (default 10).
+        $sala['intervalo_fichas'] ?? 10,
         $sala['iniciado_at'] ? date('Y-m-d H:i:s', $sala['iniciado_at']) : null,
         $sala['finalizado_at'] ? date('Y-m-d H:i:s', $sala['finalizado_at']) : null,
         $sala['codigo']
