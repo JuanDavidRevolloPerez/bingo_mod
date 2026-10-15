@@ -242,6 +242,7 @@ async function crearSala() {
     }
   } catch(e) {
     btn.disabled = false;
+    mostrarError(err, 'Error de conexión. Intenta de nuevo.');
   }
 }
 

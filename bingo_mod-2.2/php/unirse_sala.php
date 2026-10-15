@@ -29,7 +29,8 @@ if ($tipoSala === 'payplay' && $buyIn > 0) {
         jsonError("Esta sala es Payplay con Buy-in de " . number_format($buyIn, 0, ',', '.') . " fichas. Tu saldo disponible es insuficiente.");
     }
     retenerSaldoEscrow($buyIn, $codigo);
-    $sala['pozo_total'] = ($sala['pozo_total'] ?? 0) + $buyIn;
+    // NO actualizar $sala['pozo_total'] aquí; el trigger de BD lo hará al insertar en jugadores_sala
+    // El JSON se sincronizará vía verificar_estado.php polling
 }
 
 $jugadorId = bin2hex(random_bytes(8));
@@ -46,8 +47,32 @@ if (isset($_SESSION['usuario_id'])) {
     $usuarioId = (int)$_SESSION['usuario_id'];
     $salaId = obtenerSalaIdPorCodigo($codigo);
     if ($salaId) {
-        $posicion = count($sala['jugadores']);
-        agregarJugadorSalaBD($salaId, $usuarioId, $buyIn, $posicion);
+        try {
+            // Retener escrow en BD ANTES de agregar jugador (para payplay)
+            if ($tipoSala === 'payplay') {
+                $okEscrow = retenerSaldoEscrowBD($usuarioId, $buyIn, $codigo);
+                if (!$okEscrow) {
+                    // Revertir sesión
+                    reembolsarSaldoEscrow($buyIn, $codigo);
+                    // Revertir JSON
+                    $sala['jugadores'] = array_values(array_filter($sala['jugadores'], fn($j) => $j['id'] !== $jugadorId));
+                    guardarSala($sala);
+                    jsonError('Error al reservar fondos en billetera. Intenta de nuevo.');
+                }
+            }
+            
+            $posicion = count($sala['jugadores']);
+            agregarJugadorSalaBD($salaId, $usuarioId, $buyIn, $posicion);
+        } catch (\PDOException $e) {
+            error_log('[UNIRSE_SALA] Error BD: ' . $e->getMessage());
+            // Revertir sesión si falla BD
+            if ($tipoSala === 'payplay') {
+                reembolsarSaldoEscrow($buyIn, $codigo);
+                $sala['jugadores'] = array_values(array_filter($sala['jugadores'], fn($j) => $j['id'] !== $jugadorId));
+                guardarSala($sala);
+            }
+            jsonError('Error de base de datos al unirse a la sala.');
+        }
     }
 }
 

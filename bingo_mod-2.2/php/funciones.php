@@ -330,6 +330,18 @@ function guardarSalaBD(array $sala): void {
     require_once __DIR__ . '/../database/db.php';
     global $pdo;
     
+    // Usar host_id_bd (integer usuario_id) en lugar de host_id (string aleatorio)
+    $hostIdBD = $sala['host_id_bd'] ?? ($sala['host_id'] ?? 0);
+    
+    // Para salas payplay NUEVAS, insertar con pozo_total = 0.
+    // El trigger trg_jugador_sala_insert se encargará de sumar al agregar jugadores.
+    // Para UPDATE o salas free, usar el pozo_total real.
+    $stmtCheck = $pdo->prepare('SELECT 1 FROM salas WHERE codigo = ?');
+    $stmtCheck->execute([$sala['codigo']]);
+    $isNew = !$stmtCheck->fetch();
+    
+    $pozoTotal = ($isNew && ($sala['tipo_sala'] ?? '') === 'payplay') ? 0 : ($sala['pozo_total'] ?? 0);
+    
     $stmt = $pdo->prepare(
         'INSERT INTO salas (codigo, nombre, tipo_sala, buy_in, comision_pct, pozo_total, estado, host_id, modo, intervalo_fichas)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -346,9 +358,9 @@ function guardarSalaBD(array $sala): void {
         $sala['tipo_sala'],
         $sala['buy_in'],
         $sala['comision_pct'] ?? 0.10,
-        $sala['pozo_total'] ?? 0,
+        $pozoTotal,
         $sala['estado'],
-        $sala['host_id'],
+        $hostIdBD,
         $sala['modo'] ?? 'normal',
         $sala['intervalo_fichas'] ?? null
     ]);

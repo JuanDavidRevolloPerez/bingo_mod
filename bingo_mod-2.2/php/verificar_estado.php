@@ -45,6 +45,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $accion === 'estado') {
     $comisionPct = floatval($sala['comision_pct'] ?? 0.10);
     $pozoNeto    = round($pozoTotal * (1 - $comisionPct), 2);
 
+    // Si usuario logueado y sala payplay, sincronizar pozo_total desde BD (trigger lo mantiene actualizado)
+    if (isset($_SESSION['usuario_id']) && ($sala['tipo_sala'] ?? 'free') === 'payplay') {
+        try {
+            require_once __DIR__ . '/../database/db.php';
+            global $pdo;
+            $salaId = obtenerSalaIdPorCodigo($codigo);
+            if ($salaId) {
+                $stmt = $pdo->prepare('SELECT pozo_total FROM salas WHERE id = ?');
+                $stmt->execute([$salaId]);
+                $row = $stmt->fetch();
+                if ($row) {
+                    $pozoTotalBD = floatval($row['pozo_total']);
+                    if ($pozoTotalBD > 0) {
+                        $pozoTotal = $pozoTotalBD;
+                        $pozoNeto = round($pozoTotal * (1 - $comisionPct), 2);
+                        // Actualizar JSON para mantener sincronizado
+                        $sala['pozo_total'] = $pozoTotal;
+                        guardarSala($sala);
+                    }
+                }
+            }
+        } catch (\PDOException $e) {
+            error_log('[VERIFICAR_ESTADO] Error sincronizando pozo: ' . $e->getMessage());
+        }
+    }
+
     jsonOk(['sala' => [
         'codigo'            => $sala['codigo'],
         'nombre'            => $sala['nombre'],
@@ -140,6 +166,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($tipoSala === 'payplay' && $buyIn > 0) {
                     reembolsarSaldoEscrow($buyIn, $codigoPost);
                     $sala['pozo_total'] = max(0, ($sala['pozo_total'] ?? 0) - $buyIn);
+                    
+                    // Reembolso en BD si usuario logueado
+                    if (isset($_SESSION['usuario_id'])) {
+                        $usuarioId = (int)$_SESSION['usuario_id'];
+                        reembolsarSaldoEscrowBD($usuarioId, $buyIn, $codigoPost);
+                        
+                        // Actualizar pozo_total en BD (no hay trigger para DELETE)
+                        try {
+                            require_once __DIR__ . '/../database/db.php';
+                            global $pdo;
+                            $salaId = obtenerSalaIdPorCodigo($codigoPost);
+                            if ($salaId) {
+                                $stmt = $pdo->prepare('UPDATE salas SET pozo_total = pozo_total - ? WHERE id = ? AND pozo_total >= ?');
+                                $stmt->execute([$buyIn, $salaId, $buyIn]);
+                            }
+                        } catch (\PDOException $e) {
+                            error_log('[SALIR_SALA] Error actualizando pozo BD: ' . $e->getMessage());
+                        }
+                    }
                 }
 
                 // En lobby: eliminar jugador del array

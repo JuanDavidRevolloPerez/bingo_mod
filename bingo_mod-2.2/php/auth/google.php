@@ -7,6 +7,13 @@
  * 2. GET ?code=...     : Google redirige de vuelta aquí con el código de autorización.
  *                        Se intercambia por un token, se obtienen los datos del usuario,
  *                        se registra (si es nuevo) y se inicia sesión.
+ *
+ * Configuración de redirect_uri:
+ * - Se calcula dinámicamente según el host de la petición para soportar:
+ *   * localhost (http)
+ *   * túneles ngrok/cloudflare (https)
+ *   * dominios de producción (https)
+ * - GOOGLE_ALLOWED_HOSTS en .env define hosts permitidos para el callback
  */
 
 declare(strict_types=1);
@@ -16,11 +23,53 @@ require_once __DIR__ . '/../../database/db.php';
 
 $clientId     = $_ENV['GOOGLE_CLIENT_ID']     ?? '';
 $clientSecret = $_ENV['GOOGLE_CLIENT_SECRET'] ?? '';
-$redirectUri  = $_ENV['GOOGLE_REDIRECT_URI']  ?? 'http://localhost/bingo_mod-2.2/bingo_mod-2.2/php/auth/google.php';
 
 // Si no están configuradas las credenciales, mostrar error amigable
 if (empty($clientId) || empty($clientSecret)) {
     die('Error: Credenciales de Google no configuradas en el archivo .env');
+}
+
+// ── Calcular redirect_uri dinámicamente ────────────────────────────────────────
+/**
+ * Calcula la URI de redirección basándose en el host de la petición actual.
+ * Esto permite que la app funcione en localhost, túneles (ngrok) y producción
+ * sin cambiar la configuración en Google Cloud Console (solo añadir los hosts
+ * a "Authorized redirect URIs" en la consola de Google).
+ */
+function calcularRedirectUri(): string {
+    $scheme = 'http';
+    $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    
+    // Forzar HTTPS para hosts que no sean localhost/127.0.0.1
+    if (!in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+        $scheme = 'https';
+    }
+    
+    // Permitir override con APP_FORCE_HTTPS
+    $forceHttps = $_ENV['APP_FORCE_HTTPS'] ?? '';
+    if ($forceHttps === 'true') $scheme = 'https';
+    if ($forceHttps === 'false') $scheme = 'http';
+    
+    // Si hay APP_BASE_URL configurado, usarlo como base
+    $baseUrl = $_ENV['APP_BASE_URL'] ?? '';
+    if ($baseUrl) {
+        return rtrim($baseUrl, '/') . '/php/auth/google.php';
+    }
+    
+    // Construir URI dinámicamente
+    $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+    $scriptDir = rtrim($scriptDir, '/');
+    return "{$scheme}://{$host}{$scriptDir}/google.php";
+}
+
+$redirectUri = calcularRedirectUri();
+
+// Validar que el host esté en la lista de permitidos (seguridad extra)
+$allowedHosts = array_map('trim', explode(',', $_ENV['GOOGLE_ALLOWED_HOSTS'] ?? 'localhost,127.0.0.1'));
+$currentHost = parse_url($redirectUri, PHP_URL_HOST);
+if (!in_array($currentHost, $allowedHosts, true)) {
+    error_log('[GOOGLE OAUTH] Host no permitido: ' . $currentHost . ' - Permitidos: ' . implode(', ', $allowedHosts));
+    // No morimos aquí, solo logueamos; Google validará el redirect_uri en su lado
 }
 
 // ── 1. Redirigir a Google ───────────────────────────────────────────────────
