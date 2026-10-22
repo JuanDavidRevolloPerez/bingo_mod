@@ -24,6 +24,7 @@ if (isset($_SESSION['usuario_id'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sala de espera – BANG V2.1</title>
 <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 <div class="page-center">
@@ -35,18 +36,18 @@ if (isset($_SESSION['usuario_id'])) {
         <p class="tagline">Sala de espera</p>
       </div>
       <a href="wallet.php" class="nav-link-btn" style="font-size:0.75rem">
-        🪙 Mi Billetera
+        <i class="fa-solid fa-coins" aria-hidden="true"></i> Mi Billetera
       </a>
     </div>
 
     <!-- Banner Pozo en Vivo para Modo Payplay -->
     <div class="prize-pool-banner" id="banner-pozo" style="display:none">
       <div>
-        <div class="prize-title">💰 Pozo Acumulado (Prize Pool)</div>
+        <div class="prize-title"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i> Pozo Acumulado (Prize Pool)</div>
         <div class="prize-amount" id="pozo-acumulado">$ 0</div>
         <div class="prize-meta" id="pozo-meta">Buy-in: $0 | Rake: 10%</div>
       </div>
-      <div style="text-align:right">
+      <div class="prize-right">
         <span class="badge badge-yellow" style="font-size:0.75rem">Modo Payplay</span>
         <div style="font-size:0.75rem;color:var(--green);margin-top:0.35rem" id="pozo-neto-label">
           Premio Neto: $0
@@ -88,7 +89,7 @@ if (isset($_SESSION['usuario_id'])) {
     <!-- Controles host -->
     <div id="ctrl-host" style="display:none;margin-top:1rem">
       <!-- Velocidad -->
-      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.65rem 1rem">
+      <div class="ctrl-row" style="margin-bottom:0.6rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.65rem 1rem">
         <span style="font-size:0.82rem;color:var(--muted);white-space:nowrap">Velocidad de balotas:</span>
         <select id="sel-velocidad" style="flex:1;background:#1a3a14;border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;padding:0.35rem 0.6rem;font-size:0.88rem;cursor:pointer">
           <option value="5"  style="background:#1a3a14;color:#fff">Rápido (5 s)</option>
@@ -98,7 +99,7 @@ if (isset($_SESSION['usuario_id'])) {
       </div>
       <!-- Nomenclatura -->
       <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.65rem 1rem;margin-bottom:0.75rem">
-        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.4rem">
+        <div class="ctrl-row" style="margin-bottom:0.4rem">
           <span style="font-size:0.82rem;color:var(--muted);white-space:nowrap">Nomenclatura:</span>
           <select id="sel-modo" style="flex:1;background:#1a3a14;border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;padding:0.35rem 0.6rem;font-size:0.88rem;cursor:pointer">
             <option value="normal"   style="background:#1a3a14;color:#fff">Normal (A00-A99 × 5 letras)</option>
@@ -110,6 +111,19 @@ if (isset($_SESSION['usuario_id'])) {
       <p style="text-align:center;font-size:0.75rem;color:var(--muted);margin-top:0.4rem">
         Necesitas al menos 1 jugador
       </p>
+      <!-- Cancelar sala (solo host): reembolsa el escrow a todos de inmediato -->
+      <button class="btn btn-ghost" id="btn-cancelar-sala" onclick="cancelarSala()"
+        style="margin-top:0.75rem;width:100%;border-color:rgba(255,90,90,0.5);color:#ff5a5a">
+        Cancelar sala
+      </button>
+      <p id="msg-cancelar" style="text-align:center;font-size:0.75rem;color:#ff5a5a;margin-top:0.35rem;min-height:1rem"></p>
+    </div>
+
+    <!-- Aviso de sala cancelada (lo ven todos los jugadores) -->
+    <div id="aviso-cancelada" class="card" style="display:none;margin-top:1rem;text-align:center;border-color:rgba(255,90,90,0.5)">
+      <div style="font-size:1.6rem;margin-bottom:0.4rem"><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i></div>
+      <div style="font-weight:600;margin-bottom:0.25rem">Sala cancelada</div>
+      <p style="font-size:0.82rem;color:var(--muted)">Tus fichas fueron reembolsadas a tu billetera.</p>
     </div>
 
     <!-- Controles jugador -->
@@ -138,6 +152,11 @@ async function poll() {
       redirigiendo = true;
       try { const a=document.getElementById('audio-inicio'); a.currentTime=0; await a.play(); } catch(e) {}
       setTimeout(() => location.href = 'juego.php', 1200);
+      return;
+    }
+
+    if (sala.estado === 'cancelado') {
+      if (!redirigiendo) mostrarSalaCancelada();
       return;
     }
 
@@ -202,6 +221,71 @@ async function iniciarPartida() {
     try { const a=document.getElementById('audio-inicio'); a.currentTime=0; await a.play(); } catch(e) {}
     setTimeout(() => location.href = 'juego.php', 1200);
   } else { btn.disabled = false; btn.textContent = 'Iniciar partida'; alert(d.error); }
+}
+
+// ── Cancelar sala (solo host, solo antes de iniciar) ─────────────
+// Reembolsa el escrow a TODOS los jugadores de inmediato (BD para los
+// logueados; sesión propia del host aquí; invitados vía auto-reembolso).
+function cancelarSala() {
+  const btn = document.getElementById('btn-cancelar-sala');
+  if (btn.dataset.confirmando === '1') {
+    btn.dataset.confirmando = '0';
+    ejecutarCancelacion();
+  } else {
+    btn.dataset.confirmando = '1';
+    btn.textContent = '¿Reembolsar a todos y cancelar? Toca de nuevo';
+    setTimeout(() => {
+      if (btn.dataset.confirmando === '1') {
+        btn.dataset.confirmando = '0';
+        btn.textContent = 'Cancelar sala';
+      }
+    }, 4000);
+  }
+}
+
+async function ejecutarCancelacion() {
+  const btn = document.getElementById('btn-cancelar-sala');
+  const msg = document.getElementById('msg-cancelar');
+  btn.disabled = true;
+  btn.textContent = 'Cancelando...';
+  try {
+    const r = await fetch('php/cancelar_sala.php', { method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ codigo }) });
+    const d = await r.json();
+    if (d.ok) {
+      redirigiendo = true;
+      msg.style.color = 'var(--green)';
+      msg.textContent = `Sala cancelada. ${d.reembolsados} jugador(es) reembolsado(s): $${Number(d.total_reembolsado).toLocaleString()} fichas devueltas.`;
+      setTimeout(() => location.href = 'index.php', 2500);
+      return;
+    }
+    msg.style.color = '#ff5a5a';
+    msg.textContent = d.error || 'No se pudo cancelar la sala';
+  } catch (e) {
+    msg.style.color = '#ff5a5a';
+    msg.textContent = 'Error de conexión. Intenta de nuevo.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Cancelar sala';
+}
+
+// El lobby detectó estado 'cancelado': asegurar MI reembolso (invitados:
+// aquí vive su dinero en sesión; usuarios logueados: el tope saldo_retenido
+// lo hace idempotente) y salir con aviso.
+async function mostrarSalaCancelada() {
+  redirigiendo = true;
+  // Ocultar controles del host/jugador
+  document.getElementById('ctrl-host').style.display    = 'none';
+  document.getElementById('ctrl-jugador').style.display = 'none';
+  try {
+    await fetch('php/verificar_estado.php', { method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ accion:'reembolso_cancelacion', codigo }) });
+  } catch (e) {}
+  const aviso = document.getElementById('aviso-cancelada');
+  if (aviso) aviso.style.display = 'block';
+  setTimeout(() => location.href = 'index.php', 3000);
 }
 
 async function salirSala() {

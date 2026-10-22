@@ -112,8 +112,8 @@ if ($existente) {
     exit;
 }
 
-// ── Verificar número de documento duplicado ──────────────────────────────────
-$stmtDoc = $pdo->prepare('SELECT id FROM verificaciones_kyc WHERE documento_num = ? LIMIT 1');
+// ── Verificar número de documento duplicado (columna consolidada en usuarios) ──
+$stmtDoc = $pdo->prepare('SELECT id FROM usuarios WHERE documento_num = ? LIMIT 1');
 $stmtDoc->execute([$numeroDocumento]);
 if ($stmtDoc->fetch()) {
     echo json_encode(['ok' => false, 'error' => 'Ese número de documento ya está registrado.']);

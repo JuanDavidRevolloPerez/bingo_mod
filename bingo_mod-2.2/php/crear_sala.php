@@ -51,6 +51,16 @@ $hostIdBD = isset($_SESSION['usuario_id']) ? (int)$_SESSION['usuario_id'] : 0;
 // El trigger trg_jugador_sala_insert lo actualizará al agregar el host a jugadores_sala.
 $pozoTotalBD = ($tipoSala === 'payplay') ? 0 : $buyIn;
 
+// Incluir usuario_id en JSON si está logueado (para reembolsos automáticos)
+$jugadorData = [
+    'id' => $jugadorId, 
+    'nombre' => $nombre, 
+    'buy_in_pagado' => $buyIn
+];
+if (isset($_SESSION['usuario_id'])) {
+    $jugadorData['usuario_id'] = (int)$_SESSION['usuario_id'];
+}
+
 $sala = [
     'codigo'            => $codigo,
     'nombre'            => $nombreSala,
@@ -61,7 +71,7 @@ $sala = [
     'estado'            => 'esperando',
     'host_id'           => $jugadorId,  // Para JSON (string aleatorio)
     'host_id_bd'        => $hostIdBD,   // Para BD (integer usuario_id o 0)
-    'jugadores'         => [['id' => $jugadorId, 'nombre' => $nombre, 'buy_in_pagado' => $buyIn]],
+    'jugadores'         => [$jugadorData],
     'historial'         => [],
     'cartones'          => [],
     'proxima_ficha_at'  => null,
@@ -100,7 +110,7 @@ if (isset($_SESSION['usuario_id'])) {
             agregarJugadorSalaBD($salaId, $usuarioId, $buyIn, 1);
         }
     } catch (\PDOException $e) {
-        error_log('[CREAR_SALA] Error BD: ' . $e->getMessage() . ' | Code: ' . $e->getCode() . ' | SQLState: ' . $e->getSQLState() . ' | HostID_BD: ' . ($hostIdBD ?? 'null') . ' | UsuarioID: ' . ($usuarioId ?? 'null'));
+        error_log('[CREAR_SALA] Error BD: ' . $e->getMessage() . ' | Code: ' . $e->getCode() . ' | HostID_BD: ' . ($hostIdBD ?? 'null') . ' | UsuarioID: ' . ($usuarioId ?? 'null'));
         jsonError('Error BD: ' . $e->getMessage() . ' (Code: ' . $e->getCode() . ')');
     }
 }

@@ -32,10 +32,13 @@ body {
   font-family: 'DM Sans', sans-serif;
   color: var(--text);
   background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   background-image: url('https://plus.unsplash.com/premium_photo-1717810866948-5f975ec7fa36');
   background-size: cover;
   background-position: center;
@@ -59,6 +62,7 @@ body::before {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 1.5rem 1rem;
 }
 
@@ -182,6 +186,59 @@ input[type="text"]::placeholder {
   color: rgba(232, 232, 232, 0.22);
 }
 
+/* ── Campos de fichas (Billetera) ── */
+.fichas-box {
+  position: relative;
+}
+
+.fichas-field {
+  width: 100%;
+  padding: 0.72rem 4.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--yellow);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.fichas-field:focus {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.12);
+}
+
+.fichas-field::placeholder {
+  font-weight: 400;
+  color: rgba(232, 232, 232, 0.28);
+}
+
+.fichas-suffix {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* Oculta las flechas del stepper nativo del navegador */
+.fichas-field::-webkit-outer-spin-button,
+.fichas-field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.fichas-field {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* ── Buttons ── */
 .btn {
   display: block;
@@ -264,6 +321,27 @@ input[type="text"]::placeholder {
 
 .btn-bingo:active {
   transform: translateY(0);
+}
+
+/* Estado apagado: sin línea completa todavía */
+.btn-bingo:disabled {
+  background: #26331d;
+  color: var(--muted);
+  font-size: 0.92rem;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none;
+  opacity: 0.85;
+}
+
+/* Estado activo: línea completa detectada — se "enciende" el botón */
+.btn-bingo.btn-bingo-listo {
+  animation: bingo-glow 1.3s ease-in-out infinite;
+}
+
+@keyframes bingo-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(204, 245, 0, 0.55); }
+  50%      { box-shadow: 0 0 20px 7px rgba(204, 245, 0, 0.35); }
 }
 
 /* ── Labels / badges ── */
@@ -388,8 +466,8 @@ input[type="text"]::placeholder {
 
 /* ── Ball display ── */
 .ball-circle {
-  width: 82px;
-  height: 82px;
+  width: clamp(64px, 17vw, 82px);
+  height: clamp(64px, 17vw, 82px);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -423,8 +501,13 @@ input[type="text"]::placeholder {
 }
 
 .ball-num {
-  font-size: 1.9rem;
+  font-size: clamp(1.5rem, 6vw, 1.9rem);
   line-height: 1;
+}
+
+.ball-display {
+  font-size: clamp(1.15rem, 5vw, 1.55rem);
+  font-weight: 500;
 }
 
 .mini-ball {
@@ -518,11 +601,14 @@ input[type="text"]::placeholder {
 }
 
 .cell.marcada::after {
-  content: '✓';
+  content: '\f00c';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
   position: absolute;
   top: 2px;
   right: 4px;
-  font-size: 0.55rem;
+  font-size: 0.62rem;
+  line-height: 1;
   color: #F97316;
 }
 
@@ -568,12 +654,14 @@ input[type="text"]::placeholder {
 
 .winner-card {
   text-align: center;
-  padding: 3rem 2.5rem;
+  padding: clamp(1.5rem, 6vw, 3rem) clamp(1.1rem, 5vw, 2.5rem);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: clamp(16px, 4vw, 24px);
   max-width: 400px;
-  width: 90%;
+  width: min(92%, 400px);
+  max-height: 90dvh;
+  overflow-y: auto;
   backdrop-filter: blur(20px);
   animation: slideUp 0.5s ease;
 }
@@ -592,7 +680,8 @@ input[type="text"]::placeholder {
 
 .winner-name {
   font-family: 'Black Han Sans', sans-serif;
-  font-size: 2.8rem;
+  font-size: clamp(1.6rem, 9vw, 2.8rem);
+  overflow-wrap: anywhere;
   background: linear-gradient(135deg, var(--yellow), #c9aa00);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -646,10 +735,34 @@ input[type="text"]::placeholder {
 }
 
 /* ── Game layout ── */
+/* Áreas de grid: en escritorio el orden es idéntico al original
+   (Jugadores → Bingo → Controles en la columna lateral de 290px) */
 .game-grid {
   display: grid;
   grid-template-columns: 1fr 290px;
+  grid-template-areas:
+    "main  side"
+    "main  bingo"
+    "main  ctrl";
+  grid-template-rows: auto auto 1fr;
   gap: 1rem;
+  align-items: start;
+}
+
+.game-main {
+  grid-area: main;
+}
+
+.game-side {
+  grid-area: side;
+}
+
+.game-bingo {
+  grid-area: bingo;
+}
+
+.game-ctrl {
+  grid-area: ctrl;
 }
 
 /* ═══════════════════════════════════════════════
@@ -853,9 +966,23 @@ input[type="text"]::placeholder {
   line-height: 1.1;
 }
 
+/* Variante más compacta (banner de pozo dentro de la partida) */
+.prize-amount-sm {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(1.4rem, 5vw, 1.8rem);
+  color: #fff;
+  text-shadow: 0 0 18px rgba(204, 245, 0, 0.4);
+  line-height: 1.1;
+}
+
 .prize-meta {
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+/* Columna derecha del banner (badge + premio neto) */
+.prize-right {
+  text-align: right;
 }
 
 /* ── Billetera & KYC Cards ── */
@@ -983,14 +1110,175 @@ input[type="text"]::placeholder {
   background: rgba(249, 115, 22, 0.05);
 }
 
-/* ── Responsive ── */
+/* ═══════════════════════════════════════════════
+   CLASES UTILITARIAS RESPONSIVE
+   ═══════════════════════════════════════════════ */
+
+/* ── Título de página (wallet, historial) ── */
+.page-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: clamp(1.4rem, 6vw, 2rem);
+  letter-spacing: 0.02em;
+}
+
+/* ── Grid de 2 módulos (billetera: recarga + retiro) ── */
+.duo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Fila de control con label + select (espera / juego) ── */
+.ctrl-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ── Filtros del historial ── */
+.filters-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.filter-field {
+  flex: 1 1 0%;
+  min-width: 180px;
+}
+
+/* ── Paginación del historial ── */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.pagination .btn {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* ── Verificación KYC (tipo + número de documento) ── */
+.kyc-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Filas OTP (input + botón) ── */
+.otp-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Etiquetas cortas/largas del selector de modo ── */
+.lbl-short {
+  display: none;
+}
+
+/* ── Navbar: texto secundario de los botones ── */
+.nav-txt {
+  display: inline;
+}
+
+/* ── Tablas: scroll horizontal cómodo en tablet ── */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   Breakpoints: 1024 / 900 / 768 / 700 / 600 / 560 / 480 / 400
+   ═══════════════════════════════════════════════ */
+
+/* ── 1024px: columna lateral del juego más angosta ── */
+@media (max-width: 1024px) {
+  .game-grid {
+    grid-template-columns: 1fr 260px;
+  }
+}
+
+/* ── 900px: grids de 2 módulos → apilados ── */
+@media (max-width: 900px) {
+  .duo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 768px: capa base móvil (compatibilidad + área de toque) ── */
+@media (max-width: 768px) {
+
+  /* iOS/Android no soportan background-attachment: fixed */
+  body {
+    background-attachment: scroll;
+  }
+
+  /* Evita el zoom automático de iOS/Safari al enfocar un campo */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Área de toque mínima recomendada: 44px */
+  .tab,
+  .mode-btn,
+  .buyin-chip,
+  .nav-link-btn,
+  .chip-saldo,
+  .btn,
+  .btn-bingo,
+  .btn-auth,
+  .btn-google,
+  .pay-card,
+  .v22-tab,
+  .v22-btn-option,
+  .code-badge {
+    min-height: 44px;
+  }
+
+  .cell {
+    min-height: 44px;
+  }
+
+  .mini-ball {
+    width: 36px;
+    height: 36px;
+  }
+
+  .table-scroll {
+    margin: 0 -0.25rem;
+  }
+}
+
+/* ── 700px: layout de 1 columna (breakpoint histórico) ── */
 @media (max-width: 700px) {
   .game-grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "side"
+      "ctrl";
+    grid-template-rows: auto;
+    padding-bottom: 7rem;
   }
 
   .card {
     padding: 1.25rem;
+  }
+
+  .card-sm {
+    padding: 1rem;
   }
 
   .balance-grid {
@@ -998,17 +1286,328 @@ input[type="text"]::placeholder {
   }
 
   .buyin-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+  }
+
+  /* ── Barra fija: botón de BINGO siempre visible ── */
+  .game-bingo {
+    grid-area: auto;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    margin: 0;
+    background: var(--surface2);
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(14px);
+    padding: 0.8rem 0.9rem;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .game-bingo>.section-label,
+  .game-bingo>p {
+    display: none;
+  }
+
+  .game-bingo .btn-bingo {
+    padding: 0.8rem;
+    font-size: 1.05rem;
+  }
+
+  .game-bingo .warn-msg {
+    margin-top: 0;
+    margin-bottom: 0.4rem;
+    font-size: 0.75rem;
+    min-height: 1em;
+  }
+
+  /* ── Libro Mayor → tarjetas apiladas (sin scroll horizontal) ── */
+  .tx-table,
+  .tx-table tbody,
+  .tx-table tr,
+  .tx-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .tx-table {
+    border-collapse: separate;
+  }
+
+  .tx-table thead {
+    display: none;
+  }
+
+  .tx-table tr {
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.7rem 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .tx-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border: none;
+    padding: 0.3rem 0;
+    font-size: 0.85rem;
+  }
+
+  .tx-table td::before {
+    color: var(--muted);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+
+  /* Celda 1 (badge) y 2 (descripción) no llevan etiqueta */
+  .tx-table td:nth-child(1)::before,
+  .tx-table td:nth-child(2)::before {
+    content: none;
+  }
+
+  .tx-table td:nth-child(3)::before {
+    content: 'Monto';
+  }
+
+  .tx-table td:nth-child(4)::before {
+    content: 'Saldo';
+  }
+
+  .tx-table td:nth-child(5)::before {
+    content: 'Ref.';
+  }
+
+  .tx-table td:nth-child(6)::before {
+    content: 'Fecha';
+  }
+
+  .tx-table td:nth-child(1) {
+    justify-content: flex-start;
+    padding-bottom: 0.35rem;
+  }
+
+  .tx-table td:nth-child(2) {
+    display: block;
+    padding-top: 0.3rem;
+    padding-bottom: 0.55rem;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .tx-table td:nth-child(3) {
+    font-size: 1rem;
+    padding-top: 0.4rem;
+  }
+
+  .tx-table td:nth-child(6) {
+    padding-top: 0.45rem;
+    margin-top: 0.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .tx-table td[colspan] {
+    display: block;
+    text-align: center;
+    padding: 0.5rem 0 0;
+  }
+
+  .tx-table td[colspan]::before {
+    content: none;
   }
 }
 
+/* ── 600px: navbar compacta + FAB/toasts del panel admin ── */
+@media (max-width: 600px) {
+  .app-nav {
+    padding: 0.55rem 0.75rem;
+    gap: 0.5rem;
+    row-gap: 0.45rem;
+  }
+
+  .nav-actions {
+    gap: 0.4rem;
+  }
+
+  .nav-txt {
+    display: none;
+  }
+
+  /* CTA principal del lobby: conserva su texto */
+  .nav-key .nav-txt {
+    display: inline;
+  }
+
+  .chip-saldo {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.6rem;
+    gap: 0.35rem;
+  }
+
+  .nav-link-btn {
+    padding: 0.4rem 0.6rem;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* ── 560px: banners, títulos y filtros apilados ── */
+@media (max-width: 560px) {
+  .prize-pool-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .prize-right {
+    text-align: left;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(245, 158, 11, 0.22);
+  }
+
+  .filters-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .filters-form .btn {
+    width: 100%;
+  }
+
+  .kyc-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ctrl-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+
+  .ctrl-row select {
+    width: 100%;
+    flex: 0 0 auto !important;
+  }
+
+  .otp-row {
+    flex-direction: column;
+  }
+
+  .otp-row .btn {
+    width: 100%;
+  }
+}
+
+/* ── 480px: tarjetas de autenticación más holgadas ── */
+@media (max-width: 480px) {
+  .app-nav .tagline {
+    display: none;
+  }
+
+  .auth-card {
+    padding: 1.5rem 1.15rem;
+    border-radius: 18px;
+  }
+
+  .auth-title {
+    font-size: 1.3rem;
+  }
+
+  .auth-header {
+    margin-bottom: 1.4rem;
+  }
+
+  .auth-divider {
+    margin: 1.1rem 0;
+  }
+
+  .checkout-card {
+    padding: 1.5rem 1.15rem;
+    border-radius: 18px;
+  }
+}
+
+/* ── 400px: tipografía y paddings finos ── */
 @media (max-width: 400px) {
   .cell {
     font-size: 0.72rem;
   }
-  
+
   .app-nav {
-    padding: 0.6rem 0.8rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .card,
+  .card-sm {
+    padding: 0.9rem;
+  }
+
+  .carton-grid {
+    gap: 4px;
+  }
+
+  .col-header {
+    font-size: 0.95rem;
+    padding: 0.3rem;
+  }
+
+  .code-badge {
+    font-size: 1.25rem;
+    letter-spacing: 0.16em;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .balance-num {
+    font-size: 1.5rem;
+  }
+
+  .mode-btn {
+    font-size: 0.8rem;
+    padding: 0.6rem 0.4rem;
+    gap: 0.35rem;
+  }
+
+  .tabs {
+    margin-bottom: 1.1rem;
+  }
+
+  .tab {
+    font-size: 0.82rem;
+    padding: 0.55rem 0.3rem;
+  }
+
+  /* Etiqueta corta del selector de modo */
+  .lbl-full {
+    display: none;
+  }
+
+  .lbl-short {
+    display: inline;
+  }
+
+  .page-top {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .page-center {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
 
@@ -1249,4 +1848,144 @@ input[type="text"]::placeholder {
 @keyframes toastIn {
   from { opacity: 0; transform: translateY(12px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── V2.2 RESPONSIVE (debe ir al final: las reglas base V2.2 están más arriba) ── */
+@media (max-width: 768px) {
+  .v22-tab,
+  .v22-btn-option {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  #v22-fab {
+    bottom: 16px;
+    right: 16px;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  /* No debe tapar la barra fija de BINGO */
+  body.has-bottombar #v22-fab {
+    bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Los toasts suben: no deben chocar con el FAB */
+  #v22-toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: auto;
+    top: 12px;
+  }
+
+  .v22-toast {
+    max-width: 100%;
+  }
+
+  #v22-drawer {
+    max-width: 100%;
+  }
+
+  .v22-drawer-header {
+    padding: 1rem;
+  }
+
+  .v22-drawer-body {
+    padding: 1rem;
+  }
+
+  #v22-checkout-modal {
+    padding: 1.1rem;
+  }
+}
+
+/* ==========================================================================
+   V2.2 — RETOQUES FINOS
+   Solo superficie: color, transición, foco, scroll y alineación de iconos.
+   Sin medidas, sin márgenes ni cambios de maquetación.
+   ========================================================================== */
+
+/* --- Iconos Font Awesome: alineación óptica con el texto (guía oficial FA) --- */
+i[class^="fa-"],
+i[class*=" fa-"] {
+  display: inline-block;
+  line-height: 1;
+  vertical-align: -0.125em;
+}
+
+/* Contenedores posicionados: el icono va centrado por su propio dueño */
+.input-icon i,
+.toggle-pass i,
+.method-icon i {
+  vertical-align: middle;
+}
+
+/* --- Selección de texto --- */
+::selection {
+  background: rgba(249, 115, 22, 0.32);
+  color: #FFFFFF;
+}
+
+/* --- Scrollbar: solo color, el ancho sigue siendo el del sistema --- */
+* {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  background-clip: content-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.55);
+  background-clip: content-box;
+}
+
+/* --- Foco visible solo por teclado (accesibilidad, sin afectar al ratón) --- */
+:focus-visible {
+  outline: 2px solid rgba(249, 115, 22, 0.8);
+  outline-offset: 2px;
+}
+
+/* --- Transiciones suaves en enlaces y botones sin regla propia --- */
+a,
+button {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+/* --- Efecto hover sutil con sombra (box-shadow no altera el layout) --- */
+.card,
+.balance-card,
+.auth-card {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card:hover,
+.balance-card:hover,
+.auth-card:hover {
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* --- Respeta la preferencia de movimiento reducido del usuario --- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

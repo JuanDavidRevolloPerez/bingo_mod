@@ -403,7 +403,23 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Móvil ── */
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 1.5rem 1.15rem;
+        border-radius: 18px;
+      }
+      .auth-title { font-size: 1.3rem; }
+      .auth-header { margin-bottom: 1.4rem; }
+      .section-title { margin: 1rem 0 0.75rem; }
+      .auth-divider { margin: 1.1rem 0; }
+      .auth-divider span { font-size: 0.72rem; }
+      .auth-footer { font-size: 0.82rem; }
+      .btn-auth, .btn-google { padding: 0.85rem; font-size: 0.95rem; }
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 <div class="auth-wrapper">
@@ -419,13 +435,13 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
     <!-- Alertas del servidor -->
     <?php if ($error): ?>
     <div class="alert alert-error" id="server-alert">
-      <span>⚠️</span> <?= htmlspecialchars($error) ?>
+      <span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span> <?= htmlspecialchars($error) ?>
     </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
     <div class="alert alert-success" id="server-alert">
-      <span>✅</span> <?= htmlspecialchars($success) ?>
+      <span><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span> <?= htmlspecialchars($success) ?>
     </div>
     <?php endif; ?>
 
@@ -446,7 +462,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-nickname">Nickname / Alias</label>
         <div class="input-wrap">
-          <span class="input-icon">🎮</span>
+          <span class="input-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
           <input
             type="text"
             id="reg-nickname"
@@ -464,7 +480,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-email">Correo electrónico</label>
         <div class="input-wrap">
-          <span class="input-icon">📧</span>
+          <span class="input-icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
           <input
             type="email"
             id="reg-email"
@@ -481,7 +497,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-pass">Contraseña</label>
         <div class="input-wrap">
-          <span class="input-icon">🔒</span>
+          <span class="input-icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
           <input
             type="password"
             id="reg-pass"
@@ -490,7 +506,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
             autocomplete="new-password"
             required
           >
-          <button type="button" class="toggle-pass" id="btn-toggle-pass" title="Mostrar contraseña">👁️</button>
+          <button type="button" class="toggle-pass" id="btn-toggle-pass" title="Mostrar contraseña"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
         </div>
         <div class="pass-strength" id="pass-strength">
           <div class="strength-bar" id="sb1"></div>
@@ -506,7 +522,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-pass2">Confirmar contraseña</label>
         <div class="input-wrap">
-          <span class="input-icon">🔑</span>
+          <span class="input-icon"><i class="fa-solid fa-key" aria-hidden="true"></i></span>
           <input
             type="password"
             id="reg-pass2"
@@ -525,7 +541,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-tipo-doc">Tipo de documento</label>
         <div class="input-wrap">
-          <span class="input-icon">🪪</span>
+          <span class="input-icon"><i class="fa-solid fa-id-card" aria-hidden="true"></i></span>
           <select id="reg-tipo-doc" name="tipo_documento" required>
             <option value="">Selecciona...</option>
             <option value="CC">C.C. - Cédula de Ciudadanía</option>
@@ -539,7 +555,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-num-doc">Número de documento</label>
         <div class="input-wrap">
-          <span class="input-icon">🔢</span>
+          <span class="input-icon"><i class="fa-solid fa-hashtag" aria-hidden="true"></i></span>
           <input
             type="text"
             id="reg-num-doc"
@@ -556,7 +572,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-telefono">Teléfono</label>
         <div class="input-wrap">
-          <span class="input-icon">📱</span>
+          <span class="input-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span>
           <input
             type="tel"
             id="reg-telefono"
@@ -573,7 +589,7 @@ unset($_SESSION['reg_error'], $_SESSION['reg_success']);
       <div class="input-group">
         <label for="reg-fecha-nac">Fecha de nacimiento</label>
         <div class="input-wrap">
-          <span class="input-icon">📅</span>
+          <span class="input-icon"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></span>
           <input
             type="date"
             id="reg-fecha-nac"
@@ -623,7 +639,9 @@ const btnReg   = document.getElementById('btn-registrar');
 document.getElementById('btn-toggle-pass').addEventListener('click', function () {
   const isPass = pass.type === 'password';
   pass.type = isPass ? 'text' : 'password';
-  this.textContent = isPass ? '🙈' : '👁️';
+  this.innerHTML = isPass
+    ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>'
+    : '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
 });
 
 // Fuerza de contraseña
@@ -761,7 +779,7 @@ form.addEventListener('submit', async (e) => {
     const data = await res.json();
 
     if (data.ok) {
-      showAlert('✅ ¡Cuenta creada! Redirigiendo al inicio...', 'success');
+      showAlert('<i class="fa-solid fa-circle-check" aria-hidden="true"></i> ¡Cuenta creada! Redirigiendo al inicio...', 'success');
       setTimeout(() => { window.location.href = 'login.php'; }, 1800);
     } else {
       showAlert(data.error ?? 'Error al crear la cuenta', 'error');
@@ -783,7 +801,7 @@ function showAlert(msg, type) {
   const div = document.createElement('div');
   div.id = 'server-alert';
   div.className = `alert alert-${type}`;
-  div.innerHTML = (type === 'error' ? '⚠️ ' : '✅ ') + msg;
+  div.innerHTML = (type === 'error' ? '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> ' : '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> ') + msg;
 
   form.insertAdjacentElement('beforebegin', div);
   div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

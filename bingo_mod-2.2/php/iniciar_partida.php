@@ -53,11 +53,14 @@ if (isset($_SESSION['usuario_id'])) {
     $usuarioId = (int)$_SESSION['usuario_id'];
     actualizarSalaBD($sala);
     
-    // Guardar cartones en BD
+    // Guardar cartones en BD: cada cartón con el jugador_sala de SU jugador
+    // (antes se usaba siempre el del solicitante, el host, y la FK de
+    // ganadores/cartones terminaba fallando).
     $salaId = obtenerSalaIdPorCodigo($codigo);
     if ($salaId) {
-        foreach ($sala['jugadores'] as $index => $jugador) {
-            $jugadorSalaId = obtenerJugadorSalaId($salaId, $usuarioId);
+        foreach ($sala['jugadores'] as $jugador) {
+            if (empty($jugador['usuario_id'])) continue; // invitados sin cuenta: sin fila en BD
+            $jugadorSalaId = obtenerJugadorSalaId($salaId, (int)$jugador['usuario_id']);
             if ($jugadorSalaId && isset($sala['cartones'][$jugador['id']])) {
                 $carton = $sala['cartones'][$jugador['id']];
                 guardarCartonBD($jugadorSalaId, 1, $carton['grid'], $carton['marcadas']);

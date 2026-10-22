@@ -30,6 +30,30 @@ function registrarTransaccion(string $tipo, int $monto, int $saldoResultante, st
     array_unshift($_SESSION['billetera']['transacciones'], $tx);
 }
 
+/**
+ * Reembolso de seguridad para la SESIÓN del solicitante: si esta sesión
+ * retenía escrow para $codigo (sala cancelada y borrada), devolverlo en su
+ * totalidad. Idempotente gracias al marcador por sala (escrow_sala).
+ */
+function autoReembolsarEscrowSesion(string $codigo): void {
+    if (!$codigo) return;
+    if (($_SESSION['codigo_sala'] ?? '') !== $codigo) return; // el escrow retenido es de ESTA sala
+    $retenido = floatval($_SESSION['escrow_sala'][$codigo] ?? 0);
+    if ($retenido <= 0) return;
+
+    reembolsarSaldoEscrow($retenido, $codigo);
+
+    // BD también (usuarios logueados): el tope min(fichas, saldo_retenido)
+    // lo hace idempotente aunque el reembolso por cancelación ya se hiciera.
+    if (isset($_SESSION['usuario_id'])) {
+        try {
+            reembolsarSaldoEscrowBD((int)$_SESSION['usuario_id'], $retenido, $codigo);
+        } catch (\Throwable $e) {
+            error_log('[AUTO_REEMBOLSO_SESION] Error devolviendo escrow en BD: ' . $e->getMessage());
+        }
+    }
+}
+
 function retenerSaldoEscrow(int $fichas, string $codigoSala): bool {
     inicializarSesionConBD();
     if ($_SESSION['billetera']['saldo_disponible'] < $fichas) {
@@ -37,6 +61,9 @@ function retenerSaldoEscrow(int $fichas, string $codigoSala): bool {
     }
     $_SESSION['billetera']['saldo_disponible'] -= $fichas;
     $_SESSION['billetera']['saldo_retenido']   += $fichas;
+    // Marcador por sala: cuánto retiene ESTA sala en la sesión (permite
+    // reembolsar con exactitud el escrow de una sala cancelada/borrada)
+    $_SESSION['escrow_sala'][$codigoSala] = floatval($_SESSION['escrow_sala'][$codigoSala] ?? 0) + $fichas;
     registrarTransaccion('BUY_IN', -$fichas, $_SESSION['billetera']['saldo_disponible'], "Retención Escrow Buy-in Sala {$codigoSala}");
     return true;
 }
@@ -47,6 +74,9 @@ function reembolsarSaldoEscrow(int $fichas, string $codigoSala): void {
         $_SESSION['billetera']['saldo_retenido'] -= $fichas;
     }
     $_SESSION['billetera']['saldo_disponible'] += $fichas;
+    // Actualizar marcador por sala (nunca negativo)
+    $retenidoSala = floatval($_SESSION['escrow_sala'][$codigoSala] ?? 0);
+    $_SESSION['escrow_sala'][$codigoSala] = max(0, $retenidoSala - $fichas);
     registrarTransaccion('REEMBOLSO', $fichas, $_SESSION['billetera']['saldo_disponible'], "Reembolso Buy-in Sala {$codigoSala}");
 }
 
@@ -71,7 +101,92 @@ function guardarSala(array $sala): void {
     file_put_contents(roomFile($sala['codigo']), json_encode($sala, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
 }
 
+/**
+ * Ejecuta una modificación ATÓMICA sobre el archivo de una sala.
+ *
+ * El archivo se bloquea (flock) durante toda la sección crítica
+ * leer → modificar → escribir, de modo que escrituras concurrentes
+ * (polls de verificar_estado, marcar casilla, cantar bingo) no se
+ * pisan entre sí y se pierdan marcados o fichas.
+ *
+ * @param string   $codigo Código de la sala
+ * @param callable $fn     Recibe la sala (array). Debe devolver la sala
+ *                         modificada, o null para abortar SIN escribir.
+ * @return array|null La sala resultante, o null si no existe / se abortó.
+ */
+function modificarSala(string $codigo, callable $fn): ?array {
+    $f = roomFile($codigo);
+    // 'r+' no crea el archivo: si otro proceso lo borró, fallamos limpiamente
+    $fp = @fopen($f, 'r+');
+    if (!$fp) return null;
+
+    try {
+        if (!flock($fp, LOCK_EX)) {
+            fclose($fp);
+            return null;
+        }
+
+        $raw = stream_get_contents($fp);
+        $sala = json_decode($raw, true);
+        if (!is_array($sala)) {
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            return null;
+        }
+
+        $resultado = $fn($sala);
+
+        if ($resultado !== null) {
+            ftruncate($fp, 0);
+            rewind($fp);
+            fwrite($fp, json_encode($resultado, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            fflush($fp);
+        }
+
+        flock($fp, LOCK_UN);
+        fclose($fp);
+        return is_array($resultado) ? $resultado : $sala;
+    } catch (\Throwable $e) {
+        @flock($fp, LOCK_UN);
+        @fclose($fp);
+        throw $e;
+    }
+}
+
+/**
+ * Reembolsar escrow a TODOS los jugadores de una sala (sesión + BD)
+ * Se usa cuando la sala se cancela o elimina
+ */
+function reembolsarEscrowSalaCompleta(array $sala): void {
+    if (($sala['tipo_sala'] ?? 'free') !== 'payplay') return;
+    $buyIn = floatval($sala['buy_in'] ?? 0);
+    if ($buyIn <= 0) return;
+
+    // Blindaje: si el escrow ya fue reembolsado (cancelación explícita),
+    // no pagar dos veces aunque la sala se elimine más tarde.
+    if (!empty($sala['escrow_reembolsado'])) return;
+    
+    foreach ($sala['jugadores'] as $jugador) {
+        $buyInPagado = floatval($jugador['buy_in_pagado'] ?? $buyIn);
+        if ($buyInPagado <= 0) continue;
+        
+        // Reembolso en sesión (si el usuario está en esta sesión)
+        if (isset($_SESSION['jugador_id']) && $_SESSION['jugador_id'] === $jugador['id']) {
+            reembolsarSaldoEscrow($buyInPagado, $sala['codigo']);
+        }
+        
+        // Reembolso en BD (si el jugador tiene usuario_id real)
+        if (isset($jugador['usuario_id']) && $jugador['usuario_id'] > 0) {
+            reembolsarSaldoEscrowBD((int)$jugador['usuario_id'], $buyInPagado, $sala['codigo']);
+        }
+    }
+}
+
 function eliminarSala(string $code): void {
+    $sala = cargarSala($code);
+    if ($sala) {
+        reembolsarEscrowSalaCompleta($sala);
+    }
     $f = roomFile($code);
     if (file_exists($f)) @unlink($f);
 }
@@ -174,8 +289,11 @@ function requireSession(): void {
 
 function limpiarSalaExpirada(string $code): void {
     $sala = cargarSala($code);
-    if ($sala && isset($sala['finalizado_at']) && (time() - $sala['finalizado_at']) > 60)
+    if ($sala && isset($sala['finalizado_at']) && (time() - $sala['finalizado_at']) > 60) {
+        // Reembolsar escrow antes de eliminar (para salas payplay canceladas/terminadas)
+        reembolsarEscrowSalaCompleta($sala);
         eliminarSala($code);
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -267,7 +385,7 @@ function reembolsarSaldoEscrowBD(int $usuarioId, float $fichas, string $codigoSa
     try {
         $pdo->beginTransaction();
         
-        $stmt = $pdo->prepare('SELECT id, saldo_retenido FROM billeteras WHERE usuario_id = ? FOR UPDATE');
+        $stmt = $pdo->prepare('SELECT id, saldo_disponible, saldo_retenido FROM billeteras WHERE usuario_id = ? FOR UPDATE');
         $stmt->execute([$usuarioId]);
         $billetera = $stmt->fetch();
         
@@ -324,6 +442,31 @@ function acreditarPremioGanadorBD(int $usuarioId, float $fichas, string $codigoS
 }
 
 /**
+ * Acreditar premio a ganador en BD DENTRO de una transacción ya abierta.
+ * A diferencia de acreditarPremioGanadorBD(), NO gestiona su propia
+ * transacción: el llamador decide commit/rollback (todo o nada).
+ * Lanza excepción si falla, para que el llamador revierta la operación.
+ */
+function acreditarPremioGanadorBDSinTx(int $usuarioId, float $fichas, string $codigoSala): void {
+    require_once __DIR__ . '/../database/db.php';
+    global $pdo;
+
+    $stmt = $pdo->prepare('SELECT id, saldo_disponible FROM billeteras WHERE usuario_id = ? FOR UPDATE');
+    $stmt->execute([$usuarioId]);
+    $billetera = $stmt->fetch();
+
+    if (!$billetera) {
+        throw new \RuntimeException("Billetera no encontrada para el usuario {$usuarioId}");
+    }
+
+    $stmt = $pdo->prepare('UPDATE billeteras SET saldo_disponible = saldo_disponible + ? WHERE id = ?');
+    $stmt->execute([$fichas, $billetera['id']]);
+
+    $nuevoSaldo = floatval($billetera['saldo_disponible']) + $fichas;
+    registrarTransaccionBD($usuarioId, 'PREMIO', $fichas, $nuevoSaldo, "Premio Pozo Neto Bingo Sala {$codigoSala}", 'PREMIO-' . $codigoSala . '-' . time());
+}
+
+/**
  * Guardar sala en BD
  */
 function guardarSalaBD(array $sala): void {
@@ -362,7 +505,7 @@ function guardarSalaBD(array $sala): void {
         $sala['estado'],
         $hostIdBD,
         $sala['modo'] ?? 'normal',
-        $sala['intervalo_fichas'] ?? null
+        $sala['intervalo_fichas'] ?? 10
     ]);
 }
 
@@ -406,9 +549,9 @@ function actualizarSalaBD(array $sala): void {
         $sala['estado'],
         $sala['pozo_total'] ?? 0,
         $sala['modo'] ?? 'normal',
-        $sala['intervalo_fichas'] ?? null,
-        $sala['iniciado_at'] ? date('Y-m-d H:i:s', $sala['iniciado_at']) : null,
-        $sala['finalizado_at'] ? date('Y-m-d H:i:s', $sala['finalizado_at']) : null,
+        $sala['intervalo_fichas'] ?? 10,
+        $sala['iniciado_at'] ?? null  ? date('Y-m-d H:i:s', $sala['iniciado_at']) : null,
+        $sala['finalizado_at'] ?? null ? date('Y-m-d H:i:s', $sala['finalizado_at']) : null,
         $sala['codigo']
     ]);
 }
@@ -440,18 +583,41 @@ function agregarFichaHistorialBD(int $salaId, string $ficha): void {
 }
 
 /**
- * Guardar cartón en BD
+ * Guardar cartón en BD (idempotente: actualiza si ya existe, si no inserta)
  */
 function guardarCartonBD(int $jugadorSalaId, int $numeroCarton, array $grid, array $marcadas): void {
     require_once __DIR__ . '/../database/db.php';
     global $pdo;
-    
-    $stmt = $pdo->prepare(
-        'INSERT INTO cartones (jugador_sala_id, numero_carton, grid, marcadas)
-         VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE marcadas = VALUES(marcadas)'
-    );
-    $stmt->execute([$jugadorSalaId, $numeroCarton, json_encode($grid), json_encode($marcadas)]);
+
+    $stmt = $pdo->prepare('SELECT id FROM cartones WHERE jugador_sala_id = ? AND numero_carton = ?');
+    $stmt->execute([$jugadorSalaId, $numeroCarton]);
+    $existente = $stmt->fetch();
+
+    if ($existente) {
+        $stmt = $pdo->prepare('UPDATE cartones SET grid = ?, marcadas = ? WHERE id = ?');
+        $stmt->execute([json_encode($grid), json_encode($marcadas), $existente['id']]);
+    } else {
+        $stmt = $pdo->prepare(
+            'INSERT INTO cartones (jugador_sala_id, numero_carton, grid, marcadas)
+             VALUES (?, ?, ?, ?)'
+        );
+        $stmt->execute([$jugadorSalaId, $numeroCarton, json_encode($grid), json_encode($marcadas)]);
+    }
+}
+
+/**
+ * Obtener el ID REAL del cartón de un jugador en BD.
+ * Devuelve null si el jugador no tiene cartón registrado (invitados, etc.).
+ * Ojo: $jugadorSalaId es un id de jugadores_sala, NO un id de cartones.
+ */
+function obtenerCartonIdBD(int $jugadorSalaId, int $numeroCarton = 1): ?int {
+    require_once __DIR__ . '/../database/db.php';
+    global $pdo;
+
+    $stmt = $pdo->prepare('SELECT id FROM cartones WHERE jugador_sala_id = ? AND numero_carton = ?');
+    $stmt->execute([$jugadorSalaId, $numeroCarton]);
+    $result = $stmt->fetch();
+    return $result ? (int)$result['id'] : null;
 }
 
 /**
@@ -487,17 +653,22 @@ function actualizarCartonBD(int $cartonId, array $marcadas): void {
 }
 
 /**
- * Registrar ganador en BD
+ * Registrar ganador en BD (tabla dedicada partidas_resultado).
+ * - UNIQUE(uq_resultado_sala) garantiza un solo resultado por sala (idempotencia igual
+ *   que la antigua uq_ganadores_sala): si la sala ya tiene resultado, se actualiza.
+ * - $cartonId se mantiene en la firma por compatibilidad; el cartón ganador ya queda
+ *   marcado en cartones.es_ganador.
  */
 function registrarGanadorBD(int $salaId, int $usuarioId, ?int $cartonId, float $premio): void {
     require_once __DIR__ . '/../database/db.php';
     global $pdo;
     
     $stmt = $pdo->prepare(
-        'INSERT INTO ganadores (sala_id, usuario_id, carton_id, premio_ganado)
-         VALUES (?, ?, ?, ?)'
+        'INSERT INTO partidas_resultado (sala_id, ganador_id, premio_ganado)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE ganador_id = VALUES(ganador_id), premio_ganado = VALUES(premio_ganado)'
     );
-    $stmt->execute([$salaId, $usuarioId, $cartonId, $premio]);
+    $stmt->execute([$salaId, $usuarioId, $premio]);
 }
 
 /**
@@ -559,12 +730,14 @@ function crearUsuarioCompleto(
     $pdo->beginTransaction();
     
     try {
-        // 1. Insertar usuario
+        // 1. Insertar usuario (Nivel 1 KYC automático si se registra con documento;
+        //    los datos de documento viven ahora en la propia tabla usuarios)
+        $nivelKycInicial = (!empty($tipoDocumento) && !empty($numeroDocumento)) ? 1 : 0;
         $stmtUser = $pdo->prepare(
-            'INSERT INTO usuarios (nickname, email, password_hash, google_id, nivel_verificacion, rol, estado)
-             VALUES (?, ?, ?, ?, 0, \'JUGADOR\', \'ACTIVO\')'
+            'INSERT INTO usuarios (nickname, email, password_hash, google_id, nivel_verificacion, documento_tipo, documento_num, rol, estado)
+             VALUES (?, ?, ?, ?, ?, ?, ?, \'JUGADOR\', \'ACTIVO\')'
         );
-        $stmtUser->execute([$nickname, $email, $passwordHash, $googleId]);
+        $stmtUser->execute([$nickname, $email, $passwordHash, $googleId, $nivelKycInicial, $tipoDocumento, $numeroDocumento]);
         $userId = (int) $pdo->lastInsertId();
         
         // 2. Crear billetera con bono de bienvenida
@@ -574,14 +747,7 @@ function crearUsuarioCompleto(
         );
         $stmtBill->execute([$userId, $bonoBienvenida]);
         
-        // 3. Crear registro KYC con datos personales (Nivel 1 automático al registrarse con documento)
-        $stmtKyc = $pdo->prepare(
-            'INSERT INTO verificaciones_kyc (usuario_id, estado, nivel, documento_tipo, documento_num)
-             VALUES (?, \'APROBADO\', 1, ?, ?)'
-        );
-        $stmtKyc->execute([$userId, $tipoDocumento, $numeroDocumento]);
-        
-        // 4. Registrar transacción de bono de bienvenida (solo si hay bono)
+        // 3. Registrar transacción de bono de bienvenida (solo si hay bono)
         if ($bonoBienvenida > 0) {
             $stmtTx = $pdo->prepare(
                 'INSERT INTO transacciones (billetera_id, tipo, monto, saldo_resultante, descripcion, referencia)

@@ -15,6 +15,7 @@ $kyc       = $_SESSION['kyc'];
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BANG ONLINE V2.1 – Multijugador & Payplay</title>
 <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 
@@ -27,32 +28,32 @@ $kyc       = $_SESSION['kyc'];
   <div class="nav-actions">
     <?php if (!$logueado): ?>
     <a href="register.php" class="nav-link-btn" title="Crear una cuenta nueva">
-      <span>📝 Registrarse</span>
+      <span><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></span><span class="nav-txt">Registrarse</span>
     </a>
-    <a href="login.php" class="nav-link-btn" title="Iniciar sesión" style="border-color:var(--accent);color:var(--accent)">
-      <span>🔑 Ingresar</span>
+    <a href="login.php" class="nav-link-btn nav-key" title="Iniciar sesión" style="border-color:var(--accent);color:var(--accent)">
+      <span><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span><span class="nav-txt">Ingresar</span>
     </a>
     <?php else: ?>
     <span class="nav-link-btn" title="Sesión iniciada" style="opacity:0.35;cursor:not-allowed;pointer-events:none">
-      <span>📝 Registrarse</span>
+      <span><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></span><span class="nav-txt">Registrarse</span>
     </span>
     <span class="nav-link-btn" title="Sesión iniciada" style="opacity:0.35;cursor:not-allowed;pointer-events:none;border-color:var(--accent);color:var(--accent)">
-      <span>🔑 Ingresar</span>
+      <span><i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i></span><span class="nav-txt">Ingresar</span>
     </span>
     <?php endif; ?>
     <?php if ($logueado): ?>
     <a href="wallet.php" class="chip-saldo" title="Ver mi billetera y recargas">
-      <span>🪙 $ <?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?></span>
+      <span><i class="fa-solid fa-coins" aria-hidden="true"></i> $ <?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?></span>
     </a>
     <?php else: ?>
     <span class="chip-saldo" title="Inicia sesión para ver tu billetera" style="opacity:0.35;cursor:not-allowed;pointer-events:none">
-      <span>🪙 Billetera</span>
+      <span><i class="fa-solid fa-coins" aria-hidden="true"></i></span><span class="nav-txt">Billetera</span>
     </span>
     <?php endif; ?>
     <a href="perfil.php" class="nav-link-btn" title="Ver perfil y verificación KYC">
-      <span>👤 <?= htmlspecialchars($usuario['nickname'] ?? 'Jugador') ?></span>
+      <span><i class="fa-solid fa-user" aria-hidden="true"></i></span><span class="nav-txt"><?= htmlspecialchars($usuario['nickname'] ?? 'Jugador') ?></span>
       <span class="tx-badge badge-kyc-<?= intval($kyc['nivel'] ?? 1) ?>" style="padding:0.1rem 0.4rem;font-size:0.68rem">
-        KYC <?= intval($kyc['nivel'] ?? 1) >= 2 ? '✓' : '' ?>
+        KYC <?= intval($kyc['nivel'] ?? 1) >= 2 ? '<i class="fa-solid fa-check" aria-hidden="true"></i>' : '' ?>
       </span>
     </a>
   </div>
@@ -69,16 +70,16 @@ $kyc       = $_SESSION['kyc'];
     <!-- Toggle Selector de Modo (Gratuito vs Payplay) -->
     <div class="mode-toggle-group">
       <button type="button" class="mode-btn active" id="btn-modo-free" onclick="cambiarModoPlataforma('free')">
-        <span>🎮</span> Modo Gratuito
+        <span><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span> Modo Gratuito
       </button>
       <button type="button" class="mode-btn" id="btn-modo-payplay" onclick="cambiarModoPlataforma('payplay')">
-        <span>💰</span> Modo Payplay (Fichas)
+        <span><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i></span> Modo <span class="lbl-full">Payplay (Fichas)</span><span class="lbl-short">Payplay</span>
       </button>
     </div>
 
     <!-- Aviso para modo Payplay sin sesión iniciada -->
     <div id="aviso-payplay-login" class="err-msg" style="display:none;margin-top:0.75rem;text-align:center">
-      ⚠️ Para jugar en modo Payplay debes iniciar sesión. <a href="login.php" style="color:var(--yellow)">Inicia sesión aquí</a> o <a href="register.php" style="color:var(--yellow)">regístrate</a>.
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Para jugar en modo Payplay debes iniciar sesión. <a href="login.php" style="color:var(--yellow)">Inicia sesión aquí</a> o <a href="register.php" style="color:var(--yellow)">regístrate</a>.
     </div>
 
     <div class="card">
@@ -114,7 +115,7 @@ $kyc       = $_SESSION['kyc'];
             <div class="buyin-chip" onclick="selBuyIn(this, 10)">10</div>
           </div>
           <div style="font-size:0.75rem;color:var(--muted);display:flex;justify-content:space-between">
-            <span>🛡️ Retención Escrow protegida</span>
+            <span><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Retención Escrow protegida</span>
             <span style="color:var(--yellow)">Rake: 10% para la plataforma</span>
           </div>
         </div>

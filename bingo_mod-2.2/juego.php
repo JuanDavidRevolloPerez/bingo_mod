@@ -24,8 +24,9 @@ if (isset($_SESSION['usuario_id'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jugando – BANG V2.1</title>
 <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
-<body>
+<body class="has-bottombar">
 <div class="page-top">
 
   <!-- Header V2.1 -->
@@ -41,17 +42,17 @@ if (isset($_SESSION['usuario_id'])) {
     </div>
     <div style="display:flex;align-items:center;gap:0.75rem">
       <div id="hdr-info" style="font-size:0.82rem;color:var(--muted)"></div>
-      <a href="wallet.php" target="_blank" class="nav-link-btn" style="font-size:0.75rem">🪙 Billetera</a>
+      <a href="wallet.php" target="_blank" class="nav-link-btn" style="font-size:0.75rem"><i class="fa-solid fa-coins" aria-hidden="true"></i> Billetera</a>
     </div>
   </header>
 
   <!-- Banner Pozo en Vivo (Payplay) -->
   <div class="prize-pool-banner" id="juego-pozo-banner" style="display:none;margin-bottom:1rem;padding:0.75rem 1.25rem">
     <div>
-      <div class="prize-title">💰 Pozo Neto en Juego</div>
-      <div class="prize-amount" id="juego-pozo-neto" style="font-size:1.8rem">$ 0</div>
+      <div class="prize-title"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i> Pozo Neto en Juego</div>
+      <div class="prize-amount-sm" id="juego-pozo-neto">$ 0</div>
     </div>
-    <div style="text-align:right">
+    <div class="prize-right">
       <div style="font-size:0.75rem;color:var(--muted)" id="juego-pozo-total">Pozo Bruto: $0</div>
       <div style="font-size:0.72rem;color:var(--yellow);margin-top:0.2rem">Comisión Rake 10%</div>
     </div>
@@ -59,7 +60,7 @@ if (isset($_SESSION['usuario_id'])) {
 
   <div class="game-grid">
     <!-- Columna principal -->
-    <div>
+    <div class="game-main">
       <!-- Ficha actual -->
       <div class="card-sm" style="margin-bottom:1rem">
         <div class="section-label">Última ficha generada</div>
@@ -69,7 +70,7 @@ if (isset($_SESSION['usuario_id'])) {
             <div class="ball-num"    id="bola-num"   style="color:var(--muted)">--</div>
           </div>
           <div>
-            <div style="font-size:1.55rem;font-weight:500" id="bola-display">Esperando fichas...</div>
+            <div class="ball-display" id="bola-display">Esperando fichas...</div>
             <div style="font-size:0.82rem;color:var(--muted);margin-top:0.2rem" id="bola-sub">La primera ficha aparecerá en breve</div>
           </div>
         </div>
@@ -88,26 +89,32 @@ if (isset($_SESSION['usuario_id'])) {
       </div>
     </div>
 
-    <!-- Columna Lateral -->
-    <div>
-      <div class="card-sm" style="margin-bottom:1rem">
+    <!-- Barra de BINGO (fija abajo en móvil) -->
+    <div class="card-sm game-bingo">
+      <div class="section-label">¿Tienes bingo?</div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.5">
+        Marca las casillas de tu cartón y presiona el botón cuando completes una línea, columna o diagonal.
+      </p>
+      <button id="btn-bingo" class="btn-bingo" onclick="cantarBingo()" disabled>
+        Completa una línea para cantar
+      </button>
+      <div class="warn-msg" id="warn-msg"></div>
+    </div>
+
+    <!-- Jugadores -->
+    <div class="game-side">
+      <div class="card-sm">
         <div class="section-label">Jugadores</div>
         <div id="jugadores-mini" style="display:flex;flex-direction:column;gap:0.4rem"></div>
       </div>
+    </div>
 
-      <div class="card-sm">
-        <div class="section-label">¿Tienes bingo?</div>
-        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem;line-height:1.5">
-          Marca las casillas de tu cartón y presiona el botón cuando completes una línea, columna o diagonal.
-        </p>
-        <button class="btn-bingo" onclick="cantarBingo()">¡BINGO!</button>
-        <div class="warn-msg" id="warn-msg"></div>
-      </div>
-
+    <!-- Controles de partida -->
+    <div class="game-ctrl">
       <!-- Control de velocidad (solo host) -->
-      <div class="card-sm" id="ctrl-velocidad-host" style="display:none;margin-top:1rem">
+      <div class="card-sm" id="ctrl-velocidad-host" style="display:none">
         <div class="section-label">Velocidad de balotas</div>
-        <div style="display:flex;align-items:center;gap:0.6rem;margin-top:0.4rem">
+        <div class="ctrl-row" style="margin-top:0.4rem">
           <select id="sel-vel-juego" style="flex:1;background:#1a3a14;border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;padding:0.35rem 0.6rem;font-size:0.85rem;cursor:pointer">
             <option value="5">Rápido (5 s)</option>
             <option value="10" selected>Normal (10 s)</option>
@@ -131,7 +138,7 @@ if (isset($_SESSION['usuario_id'])) {
 <!-- Overlay cancelación — todos abandonaron -->
 <div class="overlay" id="overlay-cancelado" style="display:none">
   <div class="winner-card">
-    <div style="font-size:3.5rem;margin-bottom:0.75rem">🚪</div>
+    <div style="font-size:3.5rem;margin-bottom:0.75rem"><i class="fa-solid fa-door-open" aria-hidden="true"></i></div>
     <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.35rem">Partida cancelada</p>
     <div style="font-family:'Black Han Sans',sans-serif;font-size:1.6rem;color:var(--red);margin-bottom:0.5rem">
       Todos los jugadores se fueron
@@ -152,7 +159,7 @@ if (isset($_SESSION['usuario_id'])) {
 <!-- Overlay ganador -->
 <div class="overlay" id="overlay-ganador" style="display:none">
   <div class="winner-card">
-    <div style="font-size:4rem;margin-bottom:0.75rem">🏆</div>
+    <div style="font-size:4rem;margin-bottom:0.75rem"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div>
     <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.35rem">¡Ganador Confirmado!</p>
     <div class="winner-name" id="nombre-ganador"></div>
     <div id="box-premio-ganador" style="display:none;margin-top:0.75rem;padding:0.6rem 1rem;background:rgba(204,245,0,0.12);border:1px solid rgba(204,245,0,0.3);border-radius:10px">
@@ -162,10 +169,10 @@ if (isset($_SESSION['usuario_id'])) {
     <p style="margin-top:1rem;color:var(--muted);font-size:0.82rem">La partida ha finalizado</p>
     <div style="display:flex;gap:0.75rem;justify-content:center;margin-top:1.25rem;flex-wrap:wrap">
       <a href="wallet.php" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--green);color:#11280d;font-weight:600;border-radius:12px;text-decoration:none;font-size:0.9rem">
-        🪙 Ir a Billetera
+        <i class="fa-solid fa-coins" aria-hidden="true"></i> Ir a Billetera
       </a>
       <a href="ganador.php" style="display:inline-block;padding:0.75rem 1.5rem;background:var(--accent);color:#fff;border-radius:12px;text-decoration:none;font-size:0.9rem">
-        🎉 Ver Podio
+        <i class="fa-solid fa-champagne-glasses" aria-hidden="true"></i> Ver Podio
       </a>
     </div>
   </div>
@@ -233,6 +240,7 @@ function renderCarton() {
       g.appendChild(cell);
     }
   }
+  actualizarBotonBingo();
 }
 
 async function marcarCelda(val, cell) {
@@ -246,6 +254,7 @@ async function marcarCelda(val, cell) {
     marcadas.push(val);
     limpiarWarn();
     playAudio('audio-marcar');
+    actualizarBotonBingo();
   } else {
     mostrarWarn(d.error || 'Esa ficha aún no ha salido');
     cell.classList.add('shake');
@@ -253,17 +262,83 @@ async function marcarCelda(val, cell) {
   }
 }
 
-async function cantarBingo() {
-  const r = await fetch('php/cantar_bingo.php', { method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ codigo }) });
-  const d = await r.json();
-  if (d.ok && d.ganador) {
-    playAudio('audio-bingo');
-    mostrarGanador(d.nombre_ganador, d.premio, d.tipo_sala);
-  } else {
-    mostrarWarn(d.error || 'Bingo inválido – revisa tu cartón');
+/**
+ * Réplica de validarBingo() del servidor: ¿hay fila, columna o diagonal
+ * completa en las marcadas del jugador?
+ * (carton[col][fila] — mismo orden que el backend)
+ */
+function tieneLineaCompleta() {
+  if (!carton || !marcadas.length) return false;
+  const marcada = v => marcadas.includes(v);
+
+  // Filas: cada fila toma una celda de cada columna
+  for (let fila = 0; fila < 5; fila++) {
+    let completa = true;
+    for (let col = 0; col < 5; col++) {
+      if (!marcada(carton[col][fila])) { completa = false; break; }
+    }
+    if (completa) return true;
   }
+
+  // Columnas
+  for (let col = 0; col < 5; col++) {
+    let completa = true;
+    for (let fila = 0; fila < 5; fila++) {
+      if (!marcada(carton[col][fila])) { completa = false; break; }
+    }
+    if (completa) return true;
+  }
+
+  // Diagonales
+  let d1 = true, d2 = true;
+  for (let i = 0; i < 5; i++) {
+    if (!marcada(carton[i][i]))     d1 = false;
+    if (!marcada(carton[4 - i][i])) d2 = false;
+  }
+  return d1 || d2;
+}
+
+/** Activa/desactiva el botón de bingo según si hay línea completa */
+function actualizarBotonBingo() {
+  const btn = document.getElementById('btn-bingo');
+  if (!btn || btn.dataset.procesando === '1') return;
+  const listo = tieneLineaCompleta();
+  btn.disabled = !listo;
+  btn.classList.toggle('btn-bingo-listo', listo);
+  btn.textContent = listo ? '¡LÍNEA COMPLETA! BINGO →' : 'Completa una línea para cantar';
+}
+
+async function cantarBingo() {
+  const btn = document.getElementById('btn-bingo');
+  if (btn.dataset.procesando === '1') return;
+  if (!tieneLineaCompleta()) {
+    mostrarWarn('Aún no completas una línea, columna o diagonal');
+    return;
+  }
+
+  const textoOriginal = btn.textContent;
+  btn.dataset.procesando = '1';
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+
+  try {
+    const r = await fetch('php/cantar_bingo.php', { method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ codigo }) });
+    const d = await r.json();
+    if (d.ok && d.ganador) {
+      playAudio('audio-bingo');
+      mostrarGanador(d.nombre_ganador, d.premio, d.tipo_sala);
+      return; // la partida terminó: no se rehabilita el botón
+    }
+    mostrarWarn(d.error || 'Bingo inválido – revisa tu cartón');
+  } catch (e) {
+    mostrarWarn('No se pudo conectar con el servidor. Intenta de nuevo.');
+  }
+
+  btn.dataset.procesando = '0';
+  btn.textContent = textoOriginal;
+  actualizarBotonBingo();
 }
 
 async function poll() {

@@ -14,6 +14,7 @@
   100% { transform: translateY(110vh) rotate(720deg); opacity:0; }
 }
 </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 <div class="confetti" id="confetti"></div>
@@ -21,8 +22,8 @@
 <div class="page-center" style="position:relative;z-index:20">
   <div style="width:100%;max-width:420px;text-align:center">
 
-    <div class="card" style="padding:3rem 2rem">
-      <div style="font-size:5rem;margin-bottom:1rem;animation:popIn 0.6s ease" id="trophy-emoji">🏆</div>
+    <div class="card" style="padding:clamp(1.5rem,6vw,3rem) clamp(1.1rem,5vw,2rem)">
+      <div style="font-size:5rem;margin-bottom:1rem;animation:popIn 0.6s ease" id="trophy-emoji"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div>
 
       <p style="font-size:0.8rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">
         ¡Ganador!

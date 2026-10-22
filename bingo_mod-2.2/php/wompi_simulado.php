@@ -16,12 +16,15 @@ if (!isset($_SESSION['usuario_id'])) {
     exit;
 }
 
-$monto = intval($_GET['monto'] ?? 0);
-if ($monto < 10000) {
-    $monto = 10000;
+// Entrada por número de fichas (compatibilidad con el flujo antiguo por monto COP)
+$fichas = intval($_GET['fichas'] ?? 0);
+if ($fichas < 1) {
+    $fichas = intval(intval($_GET['monto'] ?? 0) / VALOR_FICHA);
 }
-
-$fichas = intval($monto / VALOR_FICHA);
+if ($fichas < 1) {
+    $fichas = 1;
+}
+$monto = $fichas * VALOR_FICHA;
 $referencia = 'WOMPI-SIM-' . strtoupper(bin2hex(random_bytes(4)));
 $usuario = $_SESSION['usuario'];
 
@@ -267,7 +270,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       margin-right: 0.5rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Móvil ── */
+    @media (max-width: 480px) {
+      .checkout-card { padding: 1.5rem 1.15rem; border-radius: 18px; }
+      .checkout-title { font-size: 1.1rem; }
+      .amount-value { font-size: 1.5rem; }
+      .method-grid { gap: 0.5rem; }
+      .method-btn { padding: 0.8rem 0.5rem; }
+      .checkout-header { margin-bottom: 1.2rem; }
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 <div class="checkout-wrapper">
@@ -280,31 +294,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="amount-box">
-      <div class="amount-label">Monto a pagar</div>
-      <div class="amount-value">$ <?= number_format($monto, 0, ',', '.') ?> COP</div>
-      <div class="amount-fichas">+ <?= $fichas ?> fichas a acreditar</div>
+      <div class="amount-label">Fichas a acreditar</div>
+      <div class="amount-value"><?= $fichas ?> <?= $fichas === 1 ? 'ficha' : 'fichas' ?></div>
+      <div class="amount-fichas">Equivale a $ <?= number_format($monto, 0, ',', '.') ?> COP</div>
     </div>
 
     <?php if (isset($error)): ?>
-    <div class="alert-error">⚠️ <?= htmlspecialchars($error) ?></div>
+    <div class="alert-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> <?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="POST" id="form-pago">
       <div class="method-grid">
         <div class="method-btn" onclick="selectMethod('PSE', this)">
-          <div class="method-icon">🏦</div>
+          <div class="method-icon"><i class="fa-solid fa-building-columns" aria-hidden="true"></i></div>
           <div class="method-name">PSE</div>
         </div>
         <div class="method-btn" onclick="selectMethod('Nequi', this)">
-          <div class="method-icon">📱</div>
+          <div class="method-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
           <div class="method-name">Nequi</div>
         </div>
         <div class="method-btn" onclick="selectMethod('Daviplata', this)">
-          <div class="method-icon">📲</div>
+          <div class="method-icon"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></div>
           <div class="method-name">Daviplata</div>
         </div>
         <div class="method-btn" onclick="selectMethod('Efecty', this)">
-          <div class="method-icon">💵</div>
+          <div class="method-icon"><i class="fa-solid fa-money-bill" aria-hidden="true"></i></div>
           <div class="method-name">Efecty</div>
         </div>
       </div>

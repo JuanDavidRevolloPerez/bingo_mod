@@ -13,6 +13,7 @@
  *   * localhost (http)
  *   * túneles ngrok/cloudflare (https)
  *   * dominios de producción (https)
+ *   * IPs privadas (192.168.x.x, 10.x.x.x, 172.16-31.x.x) - requieren device_id y device_name
  * - GOOGLE_ALLOWED_HOSTS en .env define hosts permitidos para el callback
  */
 
@@ -27,6 +28,102 @@ $clientSecret = $_ENV['GOOGLE_CLIENT_SECRET'] ?? '';
 // Si no están configuradas las credenciales, mostrar error amigable
 if (empty($clientId) || empty($clientSecret)) {
     die('Error: Credenciales de Google no configuradas en el archivo .env');
+}
+
+/**
+ * Verifica si un host es una IP privada (RFC 1918)
+ */
+function esIpPrivada(string $host): bool {
+    // Eliminar puerto si existe
+    $host = explode(':', $host)[0];
+    
+    // Verificar rangos de IP privadas
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $parts = explode('.', $host);
+        // 10.0.0.0/8
+        if ($parts[0] === '10') return true;
+        // 172.16.0.0/12
+        if ($parts[0] === '172' && $parts[1] >= 16 && $parts[1] <= 31) return true;
+        // 192.168.0.0/16
+        if ($parts[0] === '192' && $parts[1] === '168') return true;
+        // 127.0.0.0/8 (loopback) - tratado como localhost
+        if ($parts[0] === '127') return false;
+    }
+    
+    // IPv6 loopback
+    if ($host === '::1' || $host === 'localhost') return false;
+    
+    // IPv6 Unique Local Addresses (fc00::/7) - treat as private
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        $ip = inet_pton($host);
+        if ($ip !== false) {
+            $firstByte = ord($ip[0]);
+            if (($firstByte & 0xfe) === 0xfc) return true; // fc00::/7
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * Obtiene o genera un device_id persistente para el navegador/dispositivo
+ */
+function obtenerDeviceId(): string {
+    $cookieName = 'google_oauth_device_id';
+    
+    if (isset($_COOKIE[$cookieName]) && !empty($_COOKIE[$cookieName])) {
+        return $_COOKIE[$cookieName];
+    }
+    
+    // Generar un UUID v4
+    $deviceId = sprintf(
+        '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        random_int(0, 0xffff),
+        random_int(0, 0xffff),
+        random_int(0, 0xffff),
+        random_int(0x8000, 0xbfff), // variant 10xx
+        random_int(0x4000, 0x4fff), // version 4
+        random_int(0, 0xffff),
+        random_int(0, 0xffff),
+        random_int(0, 0xffff)
+    );
+    
+    // Guardar en cookie por 1 año, HttpOnly, Secure (si HTTPS), SameSite=Lax
+    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? true : false;
+    setcookie($cookieName, $deviceId, [
+        'expires' => time() + 365 * 24 * 60 * 60,
+        'path' => '/',
+        'domain' => '',
+        'secure' => $secure,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    
+    return $deviceId;
+}
+
+/**
+ * Obtiene un device_name legible para el usuario
+ */
+function obtenerDeviceName(): string {
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Dispositivo desconocido';
+    
+    // Detectar tipo de dispositivo básico
+    $platform = 'Desconocido';
+    if (preg_match('/android/i', $ua)) $platform = 'Android';
+    elseif (preg_match('/iphone|ipad|ipod/i', $ua)) $platform = 'iOS';
+    elseif (preg_match('/windows/i', $ua)) $platform = 'Windows';
+    elseif (preg_match('/macintosh|mac os x/i', $ua)) $platform = 'macOS';
+    elseif (preg_match('/linux/i', $ua)) $platform = 'Linux';
+    
+    // Detectar navegador básico
+    $browser = 'Navegador';
+    if (preg_match('/chrome|crios/i', $ua)) $browser = 'Chrome';
+    elseif (preg_match('/firefox|fxios/i', $ua)) $browser = 'Firefox';
+    elseif (preg_match('/safari/i', $ua)) $browser = 'Safari';
+    elseif (preg_match('/edge|edg/i', $ua)) $browser = 'Edge';
+    
+    return "{$browser} en {$platform}";
 }
 
 // ── Calcular redirect_uri dinámicamente ────────────────────────────────────────
@@ -64,6 +161,12 @@ function calcularRedirectUri(): string {
 
 $redirectUri = calcularRedirectUri();
 
+// Detectar si estamos en una IP privada para agregar device_id y device_name
+$currentHost = parse_url($redirectUri, PHP_URL_HOST);
+$esIpPrivada = esIpPrivada($currentHost);
+$deviceId = $esIpPrivada ? obtenerDeviceId() : '';
+$deviceName = $esIpPrivada ? obtenerDeviceName() : '';
+
 // Validar que el host esté en la lista de permitidos (seguridad extra)
 $allowedHosts = array_map('trim', explode(',', $_ENV['GOOGLE_ALLOWED_HOSTS'] ?? 'localhost,127.0.0.1'));
 $currentHost = parse_url($redirectUri, PHP_URL_HOST);
@@ -86,6 +189,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'login') {
         'access_type'   => 'online',
         'prompt'        => 'select_account'
     ];
+    
+    // Agregar device_id y device_name solo para IPs privadas (requerido por Google)
+    if ($esIpPrivada) {
+        $params['device_id'] = $deviceId;
+        $params['device_name'] = $deviceName;
+    }
     
     $url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
     header('Location: ' . $url);

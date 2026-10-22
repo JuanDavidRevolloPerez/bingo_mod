@@ -24,7 +24,7 @@
     div.innerHTML = `
       <!-- Botón Flotante (FAB) -->
       <button id="v22-fab" onclick="togglePanelV22()" title="Abrir Panel Interactivo V2.2">
-        <span style="font-size:1.25rem">🛠️</span>
+        <span style="font-size:1.25rem"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></span>
         <span class="v22-fab-text">Panel V2.2</span>
       </button>
 
@@ -34,19 +34,19 @@
         <div class="v22-drawer-header">
           <div>
             <div style="font-size:1.1rem;font-weight:600;display:flex;align-items:center;gap:0.4rem">
-              <span>🛠️</span> Panel de Control V2.2
+              <span><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i></span> Panel de Control V2.2
             </div>
             <div style="font-size:0.75rem;color:var(--muted)">Herramientas interactivas de prueba y simulación</div>
           </div>
-          <button class="v22-btn-close" onclick="togglePanelV22()">✕</button>
+          <button class="v22-btn-close" onclick="togglePanelV22()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
 
         <!-- Pestañas del Panel -->
         <div class="v22-tabs">
-          <button class="v22-tab active" onclick="tabV22('perfiles')">👤 Perfiles</button>
-          <button class="v22-tab" onclick="tabV22('pasarela')">💳 Pasarela</button>
-          <button class="v22-tab" onclick="tabV22('pozo')">💰 Bots & Pozo</button>
-          <button class="v22-tab" onclick="tabV22('calculadora')">🧮 Split Pot</button>
+          <button class="v22-tab active" onclick="tabV22('perfiles')"><i class="fa-solid fa-user" aria-hidden="true"></i> Perfiles</button>
+          <button class="v22-tab" onclick="tabV22('pasarela')"><i class="fa-solid fa-credit-card" aria-hidden="true"></i> Pasarela</button>
+          <button class="v22-tab" onclick="tabV22('pozo')"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i> Bots & Pozo</button>
+          <button class="v22-tab" onclick="tabV22('calculadora')"><i class="fa-solid fa-calculator" aria-hidden="true"></i> Split Pot</button>
         </div>
 
         <div class="v22-drawer-body">
@@ -62,7 +62,7 @@
                 <span class="badge-kyc-0 tx-badge">Nivel 0</span>
                 <div style="text-align:left;flex:1">
                   <div style="font-weight:600;font-size:0.85rem">Carlos (Básico)</div>
-                  <div style="font-size:0.72rem;color:var(--muted)">Saldo: $0 | Solo salas gratuitas</div>
+                  <div style="font-size:0.72rem;color:var(--muted)">Saldo: 0 fichas | Solo salas gratuitas</div>
                 </div>
               </button>
 
@@ -70,7 +70,7 @@
                 <span class="badge-kyc-1 tx-badge">Nivel 1</span>
                 <div style="text-align:left;flex:1">
                   <div style="font-weight:600;font-size:0.85rem">María (Jugadora)</div>
-                  <div style="font-size:0.72rem;color:var(--muted)">Saldo: $25.000 | OTP Verificado</div>
+                  <div style="font-size:0.72rem;color:var(--muted)">Saldo: 25 fichas | OTP Verificado</div>
                 </div>
               </button>
 
@@ -78,7 +78,7 @@
                 <span class="badge-kyc-2 tx-badge">Nivel 2</span>
                 <div style="text-align:left;flex:1">
                   <div style="font-weight:600;font-size:0.85rem">Andrés (VIP)</div>
-                  <div style="font-size:0.72rem;color:var(--muted)">Saldo: $150.000 | Retiros Habilitados</div>
+                  <div style="font-size:0.72rem;color:var(--muted)">Saldo: 150 fichas | Retiros Habilitados</div>
                 </div>
               </button>
             </div>
@@ -86,7 +86,7 @@
             <div class="v22-section-title">Perfil Personalizado</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.5rem">
               <input type="text" id="v22-cust-nom" placeholder="Tu alias" style="padding:0.4rem;font-size:0.8rem">
-              <input type="number" id="v22-cust-saldo" placeholder="Saldo COP" value="50000" style="padding:0.4rem;font-size:0.8rem">
+              <input type="number" id="v22-cust-saldo" placeholder="Saldo (Fichas)" value="5" min="0" step="1" style="padding:0.4rem;font-size:0.8rem">
             </div>
             <div style="display:flex;gap:0.4rem;margin-bottom:0.75rem">
               <select id="v22-cust-nivel" style="flex:1;background:#1a3a14;color:#fff;border:1px solid var(--border);border-radius:6px;padding:0.4rem;font-size:0.8rem">
@@ -107,8 +107,8 @@
               Prueba la experiencia de usuario del widget oficial de pagos en Colombia.
             </p>
 
-            <button class="btn btn-green" style="width:100%;margin-bottom:1rem" onclick="abrirCheckoutModal(20000)">
-              🛍️ Abrir Widget Checkout ($20.000 COP)
+            <button class="btn btn-green" style="width:100%;margin-bottom:1rem" onclick="abrirCheckoutModal(2)">
+              <i class="fa-solid fa-bag-shopping" aria-hidden="true"></i> Abrir Widget Checkout (2 fichas)
             </button>
 
             <div class="v22-section-title">Simulador de Webhooks SHA-256 (RF-15)</div>
@@ -116,14 +116,14 @@
               Envía un evento simulado firmado con hash criptográfico para verificar idempotencia.
             </p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;margin-bottom:0.5rem">
-              <input type="number" id="v22-wh-monto" value="50000" step="5000" placeholder="Monto" style="padding:0.4rem;font-size:0.8rem">
+              <input type="number" id="v22-wh-fichas" value="5" min="1" step="1" placeholder="Fichas" style="padding:0.4rem;font-size:0.8rem">
               <select id="v22-wh-evento" style="background:#1a3a14;color:#fff;border:1px solid var(--border);border-radius:6px;padding:0.4rem;font-size:0.8rem">
                 <option value="APPROVED">APPROVED (Aprobado)</option>
                 <option value="DECLINED">DECLINED (Rechazado)</option>
               </select>
             </div>
             <button class="btn btn-blue" style="width:100%;padding:0.5rem;font-size:0.82rem" onclick="dispararWebhookSimulado()">
-              ⚡ Disparar Webhook
+              <i class="fa-solid fa-bolt" aria-hidden="true"></i> Disparar Webhook
             </button>
             <div id="v22-wh-res" style="font-size:0.75rem;margin-top:0.5rem;display:none;padding:0.5rem;background:rgba(0,0,0,0.3);border-radius:8px;word-break:break-all"></div>
           </div>
@@ -200,19 +200,22 @@
         <div id="v22-checkout-modal" onclick="event.stopPropagation()">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
             <div style="display:flex;align-items:center;gap:0.5rem">
-              <div style="font-size:1.3rem">🔒</div>
+              <div style="font-size:1.3rem"><i class="fa-solid fa-lock" aria-hidden="true"></i></div>
               <div>
                 <div style="font-weight:600;font-size:0.95rem">Checkout Seguro Colombia</div>
                 <div style="font-size:0.7rem;color:var(--muted)">Integración Wompi / PSE / Nequi</div>
               </div>
             </div>
-            <button class="v22-btn-close" onclick="cerrarCheckoutModal()">✕</button>
+            <button class="v22-btn-close" onclick="cerrarCheckoutModal()"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
           </div>
 
           <div style="background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:12px;padding:0.85rem;margin-bottom:1rem">
-            <div style="font-size:0.75rem;color:var(--muted)">Total a pagar</div>
-            <div style="font-size:1.8rem;font-family:'Black Han Sans',sans-serif;color:var(--yellow)" id="v22-modal-monto">
-              $ 20.000 COP
+            <div style="font-size:0.75rem;color:var(--muted)">Fichas a acreditar</div>
+            <div style="font-size:1.8rem;font-family:'Black Han Sans',sans-serif;color:var(--yellow)" id="v22-modal-fichas">
+              2 fichas
+            </div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem" id="v22-modal-cop">
+              Equivale a $ 20.000 COP
             </div>
             <div style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem">
               Ref: <span id="v22-modal-ref" style="font-family:monospace">WOMPI-DEMO-01</span>
@@ -221,19 +224,19 @@
 
           <div class="pay-methods-grid" style="margin-bottom:1rem">
             <div class="pay-card active" onclick="selMetodoModal(this, 'PSE')">
-              <span style="font-size:1.1rem">🏦</span>
+              <span style="font-size:1.1rem"><i class="fa-solid fa-building-columns" aria-hidden="true"></i></span>
               <span style="font-size:0.72rem;font-weight:600">PSE</span>
             </div>
             <div class="pay-card" onclick="selMetodoModal(this, 'Nequi')">
-              <span style="font-size:1.1rem">📱</span>
+              <span style="font-size:1.1rem"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span>
               <span style="font-size:0.72rem;font-weight:600">Nequi</span>
             </div>
             <div class="pay-card" onclick="selMetodoModal(this, 'Daviplata')">
-              <span style="font-size:1.1rem">📲</span>
+              <span style="font-size:1.1rem"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i></span>
               <span style="font-size:0.72rem;font-weight:600">Daviplata</span>
             </div>
             <div class="pay-card" onclick="selMetodoModal(this, 'Tarjeta')">
-              <span style="font-size:1.1rem">💳</span>
+              <span style="font-size:1.1rem"><i class="fa-solid fa-credit-card" aria-hidden="true"></i></span>
               <span style="font-size:0.72rem;font-weight:600">Tarjeta</span>
             </div>
           </div>
@@ -292,7 +295,7 @@
       });
       const d = await r.json();
       if (d.ok) {
-        mostrarToast(`✓ ${d.mensaje}`, 'success');
+        mostrarToast(`<i class="fa-solid fa-check" aria-hidden="true"></i> ${d.mensaje}`, 'success');
         setTimeout(() => location.reload(), 800);
       }
     } catch (e) {}
@@ -316,7 +319,7 @@
       });
       const d = await r.json();
       if (d.ok) {
-        mostrarToast(`✓ Perfil ${nickname} configurado`, 'success');
+        mostrarToast(`<i class="fa-solid fa-check" aria-hidden="true"></i> Perfil ${nickname} configurado`, 'success');
         setTimeout(() => location.reload(), 800);
       }
     } catch (e) {}
@@ -338,7 +341,7 @@
       });
       const d = await r.json();
       if (d.ok) {
-        mostrarToast(`✓ ${d.mensaje}`, 'success');
+        mostrarToast(`<i class="fa-solid fa-check" aria-hidden="true"></i> ${d.mensaje}`, 'success');
         const msg = document.getElementById('v22-bot-msg');
         msg.textContent = `Total jugadores: ${d.total_jugadores} | Pozo: $${d.pozo_total.toLocaleString()}`;
         msg.style.display = 'block';
@@ -351,18 +354,18 @@
 
   // 5. Simulación de Webhooks
   window.dispararWebhookSimulado = async function () {
-    const monto = parseFloat(document.getElementById('v22-wh-monto').value) || 50000;
+    const fichas = parseInt(document.getElementById('v22-wh-fichas').value) || 5;
     const evento = document.getElementById('v22-wh-evento').value;
 
     try {
       const r = await fetch('php/billetera_acciones.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accion: 'simular_webhook_pasarela', monto, evento })
+        body: JSON.stringify({ accion: 'simular_webhook_pasarela', fichas, evento })
       });
       const d = await r.json();
       if (d.ok) {
-        mostrarToast(`⚡ Webhook ${evento} procesado (+$${monto.toLocaleString()} COP)`, 'success');
+        mostrarToast(`<i class="fa-solid fa-bolt" aria-hidden="true"></i> Webhook ${evento} procesado (+${fichas} fichas)`, 'success');
         const resBox = document.getElementById('v22-wh-res');
         resBox.style.display = 'block';
         resBox.innerHTML = `<strong>Firma SHA-256:</strong><br><span style="color:var(--yellow);font-family:monospace">${d.firma_sha256}</span><br><strong>Ref:</strong> ${d.referencia}`;
@@ -392,11 +395,13 @@
 
   // 7. Modal de Checkout
   let metodoModalSel = 'PSE';
-  let montoModalSel = 20000;
+  let fichasModalSel = 2;
+  const VALOR_FICHA_PANEL = 10000;
 
-  window.abrirCheckoutModal = function (monto) {
-    montoModalSel = monto || 20000;
-    document.getElementById('v22-modal-monto').textContent = '$ ' + montoModalSel.toLocaleString() + ' COP';
+  window.abrirCheckoutModal = function (fichas) {
+    fichasModalSel = parseInt(fichas) || 2;
+    document.getElementById('v22-modal-fichas').textContent = fichasModalSel + (fichasModalSel === 1 ? ' ficha' : ' fichas');
+    document.getElementById('v22-modal-cop').textContent = 'Equivale a $ ' + (fichasModalSel * VALOR_FICHA_PANEL).toLocaleString('es-CO') + ' COP';
     document.getElementById('v22-modal-ref').textContent = 'WOMPI-' + Math.random().toString(36).substring(2, 8).toUpperCase();
     document.getElementById('v22-checkout-overlay').style.display = 'flex';
   };
@@ -420,12 +425,12 @@
       const r = await fetch('php/billetera_acciones.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accion: 'recargar', monto: montoModalSel, metodo: metodoModalSel })
+        body: JSON.stringify({ accion: 'recargar', fichas: fichasModalSel, metodo: metodoModalSel })
       });
       const d = await r.json();
       if (d.ok) {
         cerrarCheckoutModal();
-        mostrarToast(`✓ ¡Pago exitoso vía ${metodoModalSel}! +$${montoModalSel.toLocaleString()} acreditados.`, 'success');
+        mostrarToast(`<i class="fa-solid fa-check" aria-hidden="true"></i> ¡Pago exitoso vía ${metodoModalSel}! +${fichasModalSel} fichas acreditadas.`, 'success');
         setTimeout(() => location.reload(), 1000);
       } else {
         btn.disabled = false;

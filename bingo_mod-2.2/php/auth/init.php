@@ -33,8 +33,8 @@ function inicializarSesionConBD(): void {
             require_once __DIR__ . '/../../database/db.php';
             global $pdo;
 
-            // Cargar datos del usuario
-            $stmt = $pdo->prepare('SELECT id, nickname, email, nivel_verificacion, rol FROM usuarios WHERE id = ?');
+            // Cargar datos del usuario (incluye documento: KYC consolidado en usuarios)
+            $stmt = $pdo->prepare('SELECT id, nickname, email, nivel_verificacion, documento_tipo, documento_num, rol FROM usuarios WHERE id = ?');
             $stmt->execute([$_SESSION['usuario_id']]);
             $usuario = $stmt->fetch();
 
@@ -54,28 +54,37 @@ function inicializarSesionConBD(): void {
                 $billetera = $stmt->fetch();
 
                 if ($billetera) {
+                    // Cargar transacciones desde BD
+                    $stmt = $pdo->prepare('
+                        SELECT t.tipo, t.monto, t.saldo_resultante, t.descripcion, t.referencia, t.fecha
+                        FROM transacciones t
+                        JOIN billeteras b ON t.billetera_id = b.id
+                        WHERE b.usuario_id = ?
+                        ORDER BY t.fecha DESC
+                        LIMIT 100
+                    ');
+                    $stmt->execute([$_SESSION['usuario_id']]);
+                    $transaccionesBD = $stmt->fetchAll();
+
                     $_SESSION['billetera'] = [
                         'saldo_disponible' => floatval($billetera['saldo_disponible']),
                         'saldo_retenido' => floatval($billetera['saldo_retenido']),
-                        'transacciones' => []
+                        'transacciones' => $transaccionesBD ?: []
                     ];
                 }
 
-                // Cargar KYC
-                $stmt = $pdo->prepare('SELECT * FROM verificaciones_kyc WHERE usuario_id = ?');
-                $stmt->execute([$_SESSION['usuario_id']]);
-                $kyc = $stmt->fetch();
-
-                if ($kyc) {
-                    $_SESSION['kyc'] = [
-                        'nivel' => (int)$kyc['nivel'],
-                        'estado' => $kyc['estado'],
-                        'otp_enviado' => $kyc['otp_enviado'],
-                        'documento_tipo' => $kyc['documento_tipo'],
-                        'documento_num' => $kyc['documento_num'],
-                        'estado_doc' => $kyc['estado']
-                    ];
-                }
+                // Cargar KYC (consolidado en usuarios; el OTP es transitorio en sesión)
+                $nivelKyc = (int)$usuario['nivel_verificacion'];
+                $estadoDoc = $nivelKyc >= 2 ? 'APROBADO'
+                    : (!empty($usuario['documento_num']) ? 'APROBADO' : 'PENDIENTE');
+                $_SESSION['kyc'] = [
+                    'nivel' => $nivelKyc,
+                    'estado' => $estadoDoc,
+                    'otp_enviado' => $_SESSION['kyc']['otp_enviado'] ?? null,
+                    'documento_tipo' => $usuario['documento_tipo'] ?? 'CC',
+                    'documento_num' => $usuario['documento_num'] ?? '',
+                    'estado_doc' => $estadoDoc
+                ];
             }
         } catch (\PDOException $e) {
             error_log('[INIT] Error cargando datos de BD: ' . $e->getMessage());

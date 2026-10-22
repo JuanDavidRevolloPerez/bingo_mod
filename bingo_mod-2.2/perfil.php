@@ -26,6 +26,7 @@ if (isset($_SESSION['usuario_id'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Perfil y Verificación KYC – BANG V2.1</title>
 <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 
@@ -37,10 +38,10 @@ if (isset($_SESSION['usuario_id'])) {
   </a>
   <div class="nav-actions">
     <a href="wallet.php" class="chip-saldo">
-      <span>🪙 $ <?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?></span>
+      <span><i class="fa-solid fa-coins" aria-hidden="true"></i> $ <?= number_format($billetera['saldo_disponible'], 0, ',', '.') ?></span>
     </a>
-    <a href="index.php" class="nav-link-btn" style="border-color:var(--accent);color:var(--accent)">
-      🎮 Volver al Lobby
+    <a href="index.php" class="nav-link-btn" style="border-color:var(--accent);color:var(--accent)" title="Volver al Lobby">
+      <span><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span><span class="nav-txt">Volver al Lobby</span>
     </a>
   </div>
 </nav>
@@ -67,19 +68,19 @@ if (isset($_SESSION['usuario_id'])) {
       Billetera →
     </a>
     <a href="php/auth/logout.php" class="btn" style="font-size:0.82rem;padding:0.45rem 0.9rem;border:1px solid #ff8585;color:#ff8585;text-decoration:none">
-      🚪 Cerrar sesión
+      <i class="fa-solid fa-door-open" aria-hidden="true"></i> Cerrar sesión
     </a>
   </div>
 
   <!-- Formulario KYC Nivel 1: OTP Email -->
   <div class="card" style="margin-bottom:1.5rem">
     <div class="section-label" style="color:#4dc2ff">
-      <span>📧</span> Validación OTP por Correo
+      <span><i class="fa-solid fa-envelope" aria-hidden="true"></i></span> Validación OTP por Correo
     </div>
 
     <?php if ($nivel >= 1): ?>
       <div style="display:flex;align-items:center;gap:0.75rem;background:rgba(0,148,217,0.1);padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(0,148,217,0.3)">
-        <span style="font-size:1.3rem">✓</span>
+        <span style="font-size:1.3rem"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
         <div style="font-size:0.85rem">
           <strong>Identidad validada:</strong> Tu correo electrónico ha sido verificado con código OTP. Puedes jugar en salas Payplay y realizar recargas.
         </div>
@@ -88,13 +89,13 @@ if (isset($_SESSION['usuario_id'])) {
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">
         Ingresa tu correo para recibir un código de seguridad OTP de 6 dígitos.
       </p>
-      <div style="display:flex;gap:0.6rem;margin-bottom:0.75rem">
+      <div class="otp-row">
         <input type="email" id="otp-email" value="<?= htmlspecialchars($usuario['email']) ?>" placeholder="correo@ejemplo.com" style="flex:1">
         <button class="btn btn-ghost" onclick="solicitarOtp()" style="white-space:nowrap;border-color:var(--accent);color:var(--accent)">
           Enviar OTP
         </button>
       </div>
-      <div style="display:flex;gap:0.6rem">
+      <div class="otp-row" style="margin-bottom:0">
         <input type="text" id="otp-input" placeholder="Código de 6 dígitos" maxlength="6" style="letter-spacing:0.2em;text-align:center;font-weight:bold">
         <button class="btn btn-blue" onclick="validarOtp()">Verificar →</button>
       </div>
@@ -105,12 +106,12 @@ if (isset($_SESSION['usuario_id'])) {
   <!-- Formulario de verificación documental -->
   <div class="card">
     <div class="section-label" style="color:var(--green)">
-      <span>🪪</span> Verificación de Documento de Identidad
+      <span><i class="fa-solid fa-id-card" aria-hidden="true"></i></span> Verificación de Documento de Identidad
     </div>
 
     <?php if ($nivel >= 2): ?>
       <div style="display:flex;align-items:center;gap:0.75rem;background:rgba(86,215,38,0.1);padding:0.75rem 1rem;border-radius:10px;border:1px solid rgba(86,215,38,0.3)">
-        <span style="font-size:1.3rem">✓</span>
+        <span style="font-size:1.3rem"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
         <div style="font-size:0.85rem">
           <strong>Verificación Financiera Aprobada:</strong> Documento <?= htmlspecialchars($usuario['documento'] ?? 'CC') ?> validado. Tu cuenta está habilitada para solicitar retiros de ganancias.
         </div>
@@ -120,7 +121,7 @@ if (isset($_SESSION['usuario_id'])) {
         Sube una fotografía de tu documento de identidad (Cédula de Ciudadanía CC / CE) para habilitar retiros.
       </p>
 
-      <div style="display:grid;grid-template-columns:1fr 2fr;gap:0.6rem;margin-bottom:0.75rem">
+      <div class="kyc-row">
         <div>
           <label class="form-label">Tipo Documento</label>
           <select id="kyc-tipo-doc" style="width:100%;background:#1a3a14;border:1px solid rgba(255,255,255,0.18);border-radius:8px;color:#fff;padding:0.6rem;font-size:0.85rem">
@@ -135,7 +136,7 @@ if (isset($_SESSION['usuario_id'])) {
       </div>
 
       <div class="dropzone-kyc" onclick="document.getElementById('file-fake').click()">
-        <div style="font-size:1.8rem;margin-bottom:0.3rem">📁</div>
+        <div style="font-size:1.8rem;margin-bottom:0.3rem"><i class="fa-solid fa-folder" aria-hidden="true"></i></div>
         <div style="font-size:0.88rem;font-weight:500" id="label-archivo">Haz clic para seleccionar documento (PDF, JPG, PNG)</div>
         <div style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem">Tamaño máx. 5MB. Copia legible por ambas caras.</div>
         <input type="file" id="file-fake" style="display:none" onchange="fileSelected(this)">

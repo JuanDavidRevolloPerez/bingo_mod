@@ -286,7 +286,21 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Móvil ── */
+    @media (max-width: 480px) {
+      .auth-card {
+        padding: 1.5rem 1.15rem;
+        border-radius: 18px;
+      }
+      .auth-title { font-size: 1.3rem; }
+      .auth-header { margin-bottom: 1.4rem; }
+      .auth-divider { margin: 1.1rem 0; }
+      .auth-footer { font-size: 0.82rem; }
+      .btn-auth, .btn-google { padding: 0.85rem; font-size: 0.95rem; }
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 <div class="auth-wrapper">
@@ -300,13 +314,13 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
 
     <?php if ($error): ?>
     <div class="alert alert-error" id="server-alert">
-      <span>⚠️</span> <?= htmlspecialchars($error) ?>
+      <span><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></span> <?= htmlspecialchars($error) ?>
     </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
     <div class="alert alert-success" id="server-alert">
-      <span>✅</span> <?= htmlspecialchars($success) ?>
+      <span><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span> <?= htmlspecialchars($success) ?>
     </div>
     <?php endif; ?>
 
@@ -322,7 +336,7 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
       <div class="input-group">
         <label for="log-email">Correo electrónico</label>
         <div class="input-wrap">
-          <span class="input-icon">📧</span>
+          <span class="input-icon"><i class="fa-solid fa-envelope" aria-hidden="true"></i></span>
           <input type="email" id="log-email" name="email" placeholder="tu@correo.com" autocomplete="email" required>
         </div>
         <div class="field-error" id="err-email">Ingresa un correo válido</div>
@@ -331,9 +345,9 @@ unset($_SESSION['login_error'], $_SESSION['login_success']);
       <div class="input-group">
         <label for="log-pass">Contraseña</label>
         <div class="input-wrap">
-          <span class="input-icon">🔒</span>
+          <span class="input-icon"><i class="fa-solid fa-lock" aria-hidden="true"></i></span>
           <input type="password" id="log-pass" name="password" placeholder="Tu contraseña" autocomplete="current-password" required>
-          <button type="button" class="toggle-pass" id="btn-toggle-pass" title="Mostrar contraseña">👁️</button>
+          <button type="button" class="toggle-pass" id="btn-toggle-pass" title="Mostrar contraseña"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
         </div>
         <div class="field-error" id="err-pass">La contraseña es requerida</div>
       </div>
@@ -360,7 +374,9 @@ const btnLogin = document.getElementById('btn-login');
 document.getElementById('btn-toggle-pass').addEventListener('click', function () {
   const isPass = pass.type === 'password';
   pass.type = isPass ? 'text' : 'password';
-  this.textContent = isPass ? '🙈' : '👁️';
+  this.innerHTML = isPass
+    ? '<i class="fa-solid fa-eye-slash" aria-hidden="true"></i>'
+    : '<i class="fa-solid fa-eye" aria-hidden="true"></i>';
 });
 
 function showErr(id, show) {
@@ -429,7 +445,7 @@ function showAlert(msg, type) {
   const div = document.createElement('div');
   div.id = 'server-alert';
   div.className = `alert alert-${type}`;
-  div.innerHTML = (type === 'error' ? '⚠️ ' : '✅ ') + msg;
+  div.innerHTML = (type === 'error' ? '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> ' : '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> ') + msg;
 
   form.insertAdjacentElement('beforebegin', div);
   div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

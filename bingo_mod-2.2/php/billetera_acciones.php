@@ -21,15 +21,17 @@ switch ($accion) {
         break;
 
     case 'recargar':
-        $montoCop = floatval($req['monto'] ?? 0);
         $metodo = sanitizar($req['metodo'] ?? 'PSE');
-        if ($montoCop < 10000) {
-            jsonError('El monto mínimo de recarga es de $10.000 COP (1 ficha)');
+        if (isset($req['fichas'])) {
+            $fichas = intval($req['fichas']);
+        } else {
+            // Compatibilidad: entrada antigua por monto COP
+            $fichas = intval(floatval($req['monto'] ?? 0) / VALOR_FICHA);
         }
-        $fichas = intval($montoCop / VALOR_FICHA);
         if ($fichas < 1) {
-            jsonError('El monto mínimo de recarga es de $10.000 COP (1 ficha)');
+            jsonError('La cantidad mínima de recarga es 1 ficha ($' . number_format(VALOR_FICHA, 0, ',', '.') . ' COP)');
         }
+        $montoCop = $fichas * VALOR_FICHA;
         $ref = 'WOMPI-' . strtoupper(bin2hex(random_bytes(4)));
         $_SESSION['billetera']['saldo_disponible'] += $fichas;
         registrarTransaccion(
@@ -73,7 +75,7 @@ switch ($accion) {
         if ($nivelKyc < 2) {
             jsonError('Para solicitar retiros debes completar la Verificación de Documento de Identidad.');
         }
-        $fichas = intval($req['fichas'] ?? $req['monto'] ?? 0);
+        $fichas = intval($req['fichas'] ?? 0);
         if ($fichas <= 0) {
             jsonError('Cantidad de fichas inválida.');
         }
@@ -197,25 +199,16 @@ switch ($accion) {
         $_SESSION['kyc']['nivel']          = 2;
         $_SESSION['usuario']['nivel_kyc']  = 2;
 
-        // Persistir la verificación en la base de datos
+        // Persistir la verificación en la base de datos (consolidado en usuarios)
         if (isset($_SESSION['usuario_id'])) {
             try {
                 require_once __DIR__ . '/../database/db.php';
                 global $pdo;
                 $uid = intval($_SESSION['usuario_id']);
-                $stmtKyc = $pdo->prepare(
-                    "UPDATE verificaciones_kyc SET estado = 'APROBADO', nivel = 2, documento_tipo = ?, documento_num = ? WHERE usuario_id = ?"
+                $stmtU = $pdo->prepare(
+                    "UPDATE usuarios SET nivel_verificacion = 2, documento_tipo = ?, documento_num = ? WHERE id = ?"
                 );
-                $stmtKyc->execute([$tipoDoc, $numDoc, $uid]);
-                // Si no existía registro KYC, crearlo
-                if ($stmtKyc->rowCount() === 0) {
-                    $stmtIns = $pdo->prepare(
-                        "INSERT INTO verificaciones_kyc (usuario_id, estado, nivel, documento_tipo, documento_num) VALUES (?, 'APROBADO', 2, ?, ?)"
-                    );
-                    $stmtIns->execute([$uid, $tipoDoc, $numDoc]);
-                }
-                $stmtU = $pdo->prepare("UPDATE usuarios SET nivel_verificacion = 2 WHERE id = ?");
-                $stmtU->execute([$uid]);
+                $stmtU->execute([$tipoDoc, $numDoc, $uid]);
             } catch (\PDOException $e) {
                 error_log('[KYC] Error persistiendo verificación: ' . $e->getMessage());
             }
@@ -314,8 +307,12 @@ switch ($accion) {
         break;
 
     case 'simular_webhook_pasarela':
-        $montoCop  = floatval($req['monto'] ?? 50000);
-        $fichas    = intval($montoCop / VALOR_FICHA);
+        $fichas = intval($req['fichas'] ?? 0);
+        if ($fichas < 1) {
+            // Compatibilidad: entrada antigua por monto COP
+            $fichas = max(1, intval(floatval($req['monto'] ?? 50000) / VALOR_FICHA));
+        }
+        $montoCop = $fichas * VALOR_FICHA;
         $evento    = $req['evento'] ?? 'APPROVED';
         $referencia = 'SIM-WH-' . strtoupper(bin2hex(random_bytes(4)));
         $secretKey  = $_ENV['WEBHOOK_SECRET_KEY'] ?? 'sec_events_bingo_prod_test';

@@ -39,8 +39,34 @@ $_SESSION['codigo_sala']    = $codigo;
 $_SESSION['jugador_nombre'] = $nombre;
 $_SESSION['usuario']['nickname'] = $nombre;
 
-$sala['jugadores'][] = ['id' => $jugadorId, 'nombre' => $nombre, 'buy_in_pagado' => $buyIn];
-guardarSala($sala);
+// Incluir usuario_id en JSON si está logueado (para reembolsos automáticos)
+$jugadorData = [
+    'id' => $jugadorId, 
+    'nombre' => $nombre, 
+    'buy_in_pagado' => $buyIn
+];
+if (isset($_SESSION['usuario_id'])) {
+    $jugadorData['usuario_id'] = (int)$_SESSION['usuario_id'];
+}
+
+// Alta atómica bajo candado (flock): revalida que la sala siga en
+// 'esperando' — evita unirse a una sala que se está cancelando en este
+// instante — y que no esté llena.
+$unido = modificarSala($codigo, function (array $s) use ($jugadorData) {
+    if (($s['estado'] ?? '') !== 'esperando') return null;
+    if (count($s['jugadores']) >= 20)         return null;
+    $s['jugadores'][] = $jugadorData;
+    return $s;
+});
+
+if (!$unido) {
+    // Revertir la retención de escrow de la sesión si llegó hasta aquí
+    if ($tipoSala === 'payplay' && $buyIn > 0) {
+        reembolsarSaldoEscrow($buyIn, $codigo);
+    }
+    jsonError('La partida ya comenzó o la sala fue cancelada. Intenta de nuevo.');
+}
+$sala = $unido;
 
 // ── Sincronizar con BD ─────────────────────────────────────────────────────────
 if (isset($_SESSION['usuario_id'])) {
@@ -54,9 +80,11 @@ if (isset($_SESSION['usuario_id'])) {
                 if (!$okEscrow) {
                     // Revertir sesión
                     reembolsarSaldoEscrow($buyIn, $codigo);
-                    // Revertir JSON
-                    $sala['jugadores'] = array_values(array_filter($sala['jugadores'], fn($j) => $j['id'] !== $jugadorId));
-                    guardarSala($sala);
+                    // Revertir JSON (bajo candado)
+                    modificarSala($codigo, function (array $s) use ($jugadorId) {
+                        $s['jugadores'] = array_values(array_filter($s['jugadores'], fn($j) => $j['id'] !== $jugadorId));
+                        return $s;
+                    });
                     jsonError('Error al reservar fondos en billetera. Intenta de nuevo.');
                 }
             }
@@ -68,8 +96,10 @@ if (isset($_SESSION['usuario_id'])) {
             // Revertir sesión si falla BD
             if ($tipoSala === 'payplay') {
                 reembolsarSaldoEscrow($buyIn, $codigo);
-                $sala['jugadores'] = array_values(array_filter($sala['jugadores'], fn($j) => $j['id'] !== $jugadorId));
-                guardarSala($sala);
+                modificarSala($codigo, function (array $s) use ($jugadorId) {
+                    $s['jugadores'] = array_values(array_filter($s['jugadores'], fn($j) => $j['id'] !== $jugadorId));
+                    return $s;
+                });
             }
             jsonError('Error de base de datos al unirse a la sala.');
         }
